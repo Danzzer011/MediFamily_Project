@@ -137,7 +137,7 @@ export default function AppointmentsScreen({ profileId }: { profileId: string })
 
   return (
     <LedgerScreen>
-      <Stack.Screen options={{ title: 'Appointments', headerBackVisible: true, headerLeft: undefined, headerRight: () => zoneText }} />
+      <Stack.Screen options={{ title: 'Appointments', headerTitle: profile.name, headerBackVisible: true, headerLeft: undefined, headerRight: () => zoneText }} />
       <PageTitle text="Appointments" />
 
       {vm.next && nextParts ? (
