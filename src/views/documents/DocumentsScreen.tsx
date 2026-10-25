@@ -203,7 +203,7 @@ export default function DocumentsScreen({ profileId }: { profileId: string }) {
   // ---- list ----
   return (
     <LedgerScreen>
-      <Stack.Screen options={{ title: 'Medical documents', headerBackVisible: true, headerLeft: undefined }} />
+      <Stack.Screen options={{ title: 'Medical documents', headerTitle: profile.name, headerBackVisible: true, headerLeft: undefined }} />
       <PageTitle text="Medical documents" />
       {vm.documents.length > 0 ? (
         <>

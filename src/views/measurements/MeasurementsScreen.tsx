@@ -151,7 +151,7 @@ export default function MeasurementsScreen({ profileId }: { profileId: string })
   // ---- list ----
   return (
     <LedgerScreen>
-      <Stack.Screen options={{ title: 'Health measurements', headerBackVisible: true, headerLeft: undefined }} />
+      <Stack.Screen options={{ title: 'Health measurements', headerTitle: profile.name, headerBackVisible: true, headerLeft: undefined }} />
       <PageTitle text="Health measurements" />
       {vm.total > 0 ? (
         <>
