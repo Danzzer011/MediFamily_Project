@@ -32,6 +32,14 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "MediFamily uses your photos to attach prescriptions and medical documents.",
+          "cameraPermission": "MediFamily uses the camera to photograph prescriptions and medical documents."
+        }
       ]
     ],
     "experiments": {

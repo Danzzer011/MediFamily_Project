@@ -26,3 +26,18 @@ export function formatIsoDate(date: IsoDate): string {
   const [year, month, day] = date.split('-');
   return `${Number(day)} ${MONTHS[Number(month) - 1]} ${year}`;
 }
+
+const DAILY_TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+// True when the text is a 24-hour clock time written as HH:mm (e.g. 08:00, 20:30).
+export function isValidDailyTime(text: string): boolean {
+  return DAILY_TIME_PATTERN.test(text);
+}
+
+// "8:5" or "8:05" -> "08:05", so the same time is always written the same way.
+// Returns the trimmed input unchanged if it does not look like a time.
+export function normaliseDailyTime(text: string): string {
+  const match = /^(\d{1,2}):(\d{1,2})$/.exec(text.trim());
+  if (!match) return text.trim();
+  return `${match[1].padStart(2, '0')}:${match[2].padStart(2, '0')}`;
+}
