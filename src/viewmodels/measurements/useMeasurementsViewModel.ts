@@ -77,8 +77,9 @@ export function useMeasurementsViewModel(profileId: string) {
     setErrors(NO_ERRORS);
   }
 
-  // times are entered and shown in the profile's time zone, so every caregiver sees the same schedule
+  // times are read and shown in the profile's time zone
   const zone = profile?.timeZone ?? 'UTC';
+  const existing = editing !== null && editing !== 'new' ? editing : null; // the reading being edited
 
   function startAdding() {
     setEditing('new');
@@ -177,6 +178,7 @@ export function useMeasurementsViewModel(profileId: string) {
     filter,
     setFilter,
     editing,
+    existing,
     isNew: editing === 'new',
     type,
     unit,

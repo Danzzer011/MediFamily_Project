@@ -30,7 +30,7 @@ function findOwn(profileId: string, id: string): MedicalDocument {
   return found;
 }
 
-// shortcut: no version check on edit/delete (Phase 2 backend adds it), upgrade with Supabase.
+// No version check on edit or delete yet. The Phase 2 backend adds it.
 export const demoDocumentRepository: DocumentRepository = {
   async list(profileId) {
     await demoRequest('read');

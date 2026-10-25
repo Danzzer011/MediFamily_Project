@@ -21,6 +21,7 @@ import LoadingView from '../../components/LoadingView';
 import { APPOINTMENT_STATUSES, type Appointment } from '../../models/Appointment';
 import { dayParts, splitTimestamp, zoneLabel } from '../../models/dateTime';
 import { formatIsoDate } from '../../models/dates';
+import { capitalize } from '../../models/text';
 import { useThemeColors } from '../../theme';
 import { monoFont, useStatusStyles } from '../../theme/medifamily-theme';
 import { useAppointmentsViewModel } from '../../viewmodels/appointments/useAppointmentsViewModel';
@@ -42,8 +43,9 @@ export default function AppointmentsScreen({ profileId }: { profileId: string })
 
   // ---- add / edit form ----
   if (vm.editing) {
+    const { existing } = vm;
     const pending = vm.pendingDelete;
-    const deleted = pending ? splitTimestamp(pending.startsAt, vm.zone) : null;
+    const when = pending ? splitTimestamp(pending.startsAt, vm.zone) : null;
     return (
       <LedgerScreen>
         <Stack.Screen
@@ -93,16 +95,16 @@ export default function AppointmentsScreen({ profileId }: { profileId: string })
         </View>
         <View style={[styles.dock, { borderColor: colors.border }]}>
           <Button title={vm.isNew ? 'Save appointment' : 'Save changes'} loading={vm.saving} onPress={vm.save} />
-          {typeof vm.editing === 'object' ? (
+          {existing ? (
             <View style={styles.deleteGap}>
-              <Button title="Delete appointment" variant="danger" disabled={vm.saving} onPress={() => vm.askToDelete(vm.editing as Appointment)} />
+              <Button title="Delete appointment" variant="danger" disabled={vm.saving} onPress={() => vm.askToDelete(existing)} />
             </View>
           ) : null}
         </View>
         <ConfirmDialog
           visible={pending !== null}
           title="Delete this appointment?"
-          message={`The visit with ${pending?.doctorName ?? ''} on ${deleted ? formatIsoDate(deleted.date) : ''} at ${deleted?.time ?? ''} will be deleted for ${profile.name}. This cannot be undone.`}
+          message={`The visit with ${pending?.doctorName ?? ''} on ${when ? formatIsoDate(when.date) : ''} at ${when?.time ?? ''} will be deleted for ${profile.name}. This cannot be undone.`}
           confirmTitle="Delete"
           destructive
           loading={vm.deleting}
@@ -190,7 +192,7 @@ export default function AppointmentsScreen({ profileId }: { profileId: string })
         </View>
       )}
 
-      <View style={styles.notice2}>
+      <View style={styles.demoNotice}>
         <DemoDataNotice />
       </View>
     </LedgerScreen>
@@ -233,10 +235,6 @@ function AppointmentRow({ appointment: a, zone, onOpen, onExport }: { appointmen
   );
 }
 
-function capitalize(text: string) {
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
 const styles = StyleSheet.create({
   zone: { fontSize: 13 },
   next: { marginHorizontal: 16, marginBottom: 12, borderWidth: 1.5, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10 },
@@ -248,7 +246,7 @@ const styles = StyleSheet.create({
   remindersTitle: { fontSize: 15, fontWeight: '600' },
   hint: { fontSize: 13, lineHeight: 18 },
   notice: { marginHorizontal: 16, marginTop: 12, fontSize: 14, lineHeight: 20, borderRadius: 12, padding: 12 },
-  notice2: { paddingHorizontal: 16, paddingTop: 20 },
+  demoNotice: { paddingHorizontal: 16, paddingTop: 20 },
   row: { flexDirection: 'row', gap: 12, paddingVertical: 12, paddingRight: 16 },
   rowMain: { flex: 1, minWidth: 0 },
   rowTap: { flexDirection: 'row', gap: 12 },

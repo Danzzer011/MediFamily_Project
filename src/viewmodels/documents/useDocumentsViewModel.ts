@@ -98,14 +98,17 @@ export function useDocumentsViewModel(profileId: string) {
   }
 
   // Phase 1: buttons only. Real camera and file picking come in Phase 2, so we attach a labelled demo file.
-  function takePhoto() {
-    setFile({ fileName: 'photo-demo.jpg', fileType: 'image' });
+  function attachDemoFile(demoFile: DocumentFile) {
+    setFile(demoFile);
     setErrors((current) => ({ ...current, file: '' }));
   }
 
+  function takePhoto() {
+    attachDemoFile({ fileName: 'photo-demo.jpg', fileType: 'image' });
+  }
+
   function chooseFile() {
-    setFile({ fileName: 'document-demo.pdf', fileType: 'pdf' });
-    setErrors((current) => ({ ...current, file: '' }));
+    attachDemoFile({ fileName: 'document-demo.pdf', fileType: 'pdf' });
   }
 
   async function save() {
