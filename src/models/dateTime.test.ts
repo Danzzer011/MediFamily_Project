@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { formatTimestamp, splitTimestamp, toTimestamp, validateDateTime } from './dateTime';
+import { dayParts, daysUntil, formatTimestamp, splitTimestamp, toTimestamp, validateDateTime, zoneLabel } from './dateTime';
 
 describe('validateDateTime', () => {
   it('accepts a real date and a 24-hour time', () => {
@@ -14,7 +14,30 @@ describe('validateDateTime', () => {
   });
 
   it('asks for empty fields', () => {
-    expect(validateDateTime('', '  ')).toEqual({ date: 'Enter the date.', time: 'Enter the time.' });
+    expect(validateDateTime('', '  ')).toEqual({ date: 'Enter the date.', time: 'Enter the time, like 18:30.' });
+  });
+
+  it('rejects a time without a colon, like 630', () => {
+    expect(validateDateTime('2026-11-03', '630').time).toBe('Enter the time, like 18:30.');
+  });
+});
+
+describe('list helpers', () => {
+  it('gives the day, month, weekday and time in the profile zone', () => {
+    expect(dayParts('2026-11-05T16:30:00.000Z', 'Africa/Cairo')).toEqual({ day: '05', month: 'NOV', weekday: 'THU', year: '2026', time: '18:30' });
+  });
+
+  it('counts calendar days in the profile zone, not UTC', () => {
+    // 22:30 UTC on 4 Nov is already 00:30 on 5 Nov in Cairo (UTC+2), so an appointment on 5 Nov is "today" there
+    const now = new Date('2026-11-04T22:30:00.000Z');
+    expect(daysUntil('2026-11-05T16:30:00.000Z', 'Africa/Cairo', now)).toBe(0);
+    expect(daysUntil('2026-11-09T09:00:00.000Z', 'Africa/Cairo', now)).toBe(4);
+    expect(daysUntil('2026-11-03T09:00:00.000Z', 'Africa/Cairo', now)).toBe(-2);
+  });
+
+  it('names the zone for the header', () => {
+    expect(zoneLabel('Africa/Cairo')).toBe('Cairo time');
+    expect(zoneLabel('America/New_York')).toBe('New York time');
   });
 });
 

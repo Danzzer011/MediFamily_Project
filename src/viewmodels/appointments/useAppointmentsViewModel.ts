@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import type { Appointment, AppointmentStatus } from '../../models/Appointment';
-import { splitTimestamp, toTimestamp, validateDateTime } from '../../models/dateTime';
+import { daysUntil, splitTimestamp, toTimestamp, validateDateTime } from '../../models/dateTime';
 import { toAppError } from '../../models/errors';
 import type { FamilyProfile } from '../../models/FamilyProfile';
 import { toOptionalText } from '../../models/validation';
@@ -68,6 +68,13 @@ export function useAppointmentsViewModel(profileId: string) {
   // times are entered and shown in the profile's time zone, so every caregiver sees the same schedule
   const zone = profile?.timeZone ?? 'UTC';
 
+  // "Coming up" (soonest first) and "Earlier" (newest first). A passed date never changes a status by itself.
+  const nowIso = new Date().toISOString();
+  const upcoming = appointments.filter((a) => a.startsAt >= nowIso);
+  const earlier = appointments.filter((a) => a.startsAt < nowIso).reverse();
+  const next = upcoming.find((a) => a.status === 'scheduled') ?? null;
+  const daysToNext = next ? daysUntil(next.startsAt, zone) : 0;
+
   function startAdding() {
     setEditing('new');
     setDoctor('');
@@ -75,7 +82,7 @@ export function useAppointmentsViewModel(profileId: string) {
     setTime('09:00');
     setLocation('');
     setNotes('');
-    setStatus('scheduled'); // new appointments always start as scheduled
+    setStatus('scheduled'); // new appointments start as scheduled
     setErrors(NO_ERRORS);
     setFormError('');
   }
@@ -100,13 +107,13 @@ export function useAppointmentsViewModel(profileId: string) {
   async function save() {
     if (saving || !editing) return;
     const dateTime = validateDateTime(date, time);
-    const next: FormErrors = {
+    const problems: FormErrors = {
       doctor: doctor.trim() ? '' : 'Enter the doctor’s name.',
       date: dateTime.date ?? '',
       time: dateTime.time ?? '',
     };
-    setErrors(next);
-    if (next.doctor || next.date || next.time) return;
+    setErrors(problems);
+    if (problems.doctor || problems.date || problems.time) return;
 
     const input = {
       doctorName: doctor.trim(),
@@ -144,6 +151,7 @@ export function useAppointmentsViewModel(profileId: string) {
     try {
       await appointmentRepository.remove(profileId, pendingDelete.id);
       setPendingDelete(null);
+      setEditing(null); // the edit form belonged to the deleted appointment
       reload();
     } catch (error) {
       setDeleteError(toAppError(error).message);
@@ -160,7 +168,12 @@ export function useAppointmentsViewModel(profileId: string) {
 
   return {
     profile,
-    appointments,
+    zone,
+    upcoming,
+    earlier,
+    next,
+    daysToNext,
+    hasAppointments: appointments.length > 0,
     loading,
     loadError,
     remindersOn,

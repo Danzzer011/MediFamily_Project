@@ -6,31 +6,17 @@ import { demoRequest, findAccessibleProfile, newDemoId, nowIso, removeWhere, req
 
 const SEED_TIME = '2026-10-01T09:00:00.000Z';
 
+// Made-up visits for the demo profile (Cairo time: UTC+2 in winter, UTC+3 in summer).
+function demo(n: number, startsAt: string, doctorName: string, location: string | null, notes: string | null, status: Appointment['status']): Appointment {
+  return { id: `demo-appointment-${n}`, version: 1, createdAt: SEED_TIME, updatedAt: SEED_TIME, profileId: 'demo-profile-father', doctorName, startsAt, location, notes, status };
+}
+
 const appointments: Appointment[] = [
-  {
-    id: 'demo-appointment-1',
-    version: 1,
-    createdAt: SEED_TIME,
-    updatedAt: SEED_TIME,
-    profileId: 'demo-profile-father',
-    doctorName: 'Dr. Demo Cardiologist',
-    startsAt: '2026-11-03T10:30:00.000Z',
-    location: 'Demo Clinic, Cairo',
-    notes: 'Bring the latest blood test results.',
-    status: 'scheduled',
-  },
-  {
-    id: 'demo-appointment-2',
-    version: 1,
-    createdAt: SEED_TIME,
-    updatedAt: SEED_TIME,
-    profileId: 'demo-profile-father',
-    doctorName: 'Dr. Demo Diabetes Specialist',
-    startsAt: '2026-10-10T09:00:00.000Z',
-    location: null,
-    notes: null,
-    status: 'completed',
-  },
+  demo(1, '2026-11-05T16:30:00.000Z', 'Dr. Hany Fawzy', 'Al Salam International Hospital, Maadi', 'Bring the last ECG and the October blood test.', 'scheduled'),
+  demo(2, '2026-11-09T09:00:00.000Z', 'Dr. Mohamed Abdel Moneim El-Gendy', 'Dar Al Fouad Hospital, 6th of October City', 'Fasting. No breakfast before the HbA1c test.', 'scheduled'),
+  demo(3, '2026-10-20T14:00:00.000Z', 'Dr. Tarek Nabil', 'Heliopolis Eye Clinic', null, 'missed'),
+  demo(4, '2026-10-12T15:30:00.000Z', 'Dr. Hany Fawzy', 'Al Salam International Hospital, Maadi', 'Panadol 500 mg only if needed. Follow-up in 4 weeks.', 'completed'),
+  demo(5, '2026-10-04T10:15:00.000Z', 'Dr. Nadia El-Sayed', null, 'Clinic cancelled. Needs a new date.', 'cancelled'),
 ];
 
 // Checks the caller may use the profile, like row-level security would.
