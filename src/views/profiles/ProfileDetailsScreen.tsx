@@ -53,7 +53,22 @@ export default function ProfileDetailsScreen({ profileId }: { profileId: string 
           description={vm.isCreator ? 'Invite family members and manage access' : 'See who has access, or leave this profile'}
           href={`/profiles/${profile.id}/sharing`}
         />
-        {/* Medications, prescriptions, appointments, documents and measurements (Mazen's and Mohab's screens) link from here. */}
+        <MenuItem
+          title="Medications"
+          description="Medication schedules, dosage and daily reminder times"
+          href={`/profiles/${profile.id}/medications`}
+        />
+        <MenuItem
+          title="Medicine stock"
+          description="Remaining quantities and refill alerts"
+          href={`/profiles/${profile.id}/stock`}
+        />
+        <MenuItem
+          title="Prescriptions"
+          description="Doctor, visit date, prescribed medicines and attachments"
+          href={`/profiles/${profile.id}/prescriptions`}
+        />
+        {/* Appointments, documents and measurements (Mohab's screens) link from here. */}
       </View>
 
       {vm.isCreator ? (

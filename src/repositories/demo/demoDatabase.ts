@@ -9,6 +9,9 @@
  */
 import type { Account } from '../../models/Account';
 import type { FamilyProfile } from '../../models/FamilyProfile';
+import type { MedicalDocument } from '../../models/MedicalDocument';
+import type { Medication } from '../../models/Medication';
+import type { Prescription } from '../../models/Prescription';
 import type { ProfileInvitation } from '../../models/Sharing';
 import { AppError } from '../../models/errors';
 
@@ -86,7 +89,66 @@ const invitations: ProfileInvitation[] = [
   },
 ];
 
-export const demoTables = { accounts, profiles, memberships, invitations };
+const medications: Medication[] = [
+  {
+    id: 'demo-medication-metformin',
+    version: 1,
+    createdAt: SEED_TIME,
+    updatedAt: SEED_TIME,
+    profileId: 'demo-profile-father',
+    name: 'Metformin 500 mg',
+    dosageInstructions: '1 tablet with breakfast and 1 with dinner',
+    reminderTimes: ['08:00', '20:00'],
+    treatmentStart: '2026-09-01',
+    treatmentEnd: null,
+    remainingQuantity: 12,
+    stockUnit: 'tablets',
+    refillThreshold: 14,
+  },
+  {
+    id: 'demo-medication-vitamin-d',
+    version: 1,
+    createdAt: SEED_TIME,
+    updatedAt: SEED_TIME,
+    profileId: 'demo-profile-grandmother',
+    name: 'Vitamin D3 1000 IU',
+    dosageInstructions: '1 capsule after lunch',
+    reminderTimes: ['14:00'],
+    treatmentStart: '2026-10-01',
+    treatmentEnd: '2026-12-31',
+    remainingQuantity: null,
+    stockUnit: null,
+    refillThreshold: null,
+  },
+];
+
+const prescriptions: Prescription[] = [
+  {
+    id: 'demo-prescription-diabetes',
+    version: 1,
+    createdAt: SEED_TIME,
+    updatedAt: SEED_TIME,
+    profileId: 'demo-profile-father',
+    doctorName: 'Dr. Demo Hassan',
+    speciality: 'Endocrinology',
+    visitDate: '2026-08-30',
+    medicines: [
+      {
+        id: 'demo-prescription-medicine-1',
+        medicineName: 'Metformin 500 mg',
+        dosageInstructions: 'Twice daily with meals',
+        medicationId: 'demo-medication-metformin',
+        position: 0,
+      },
+    ],
+    attachmentDocumentId: null,
+  },
+];
+
+// Prescription attachments live here as documents (FR04, FR07).
+const documents: MedicalDocument[] = [];
+
+export const demoTables = { accounts, profiles, memberships, invitations, medications, prescriptions, documents };
 
 // ---- Session -------------------------------------------------------------
 

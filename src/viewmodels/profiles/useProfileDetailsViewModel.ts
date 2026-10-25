@@ -5,6 +5,7 @@ import { useSession } from '../../context/SessionContext';
 import { toAppError } from '../../models/errors';
 import type { FamilyProfile } from '../../models/FamilyProfile';
 import { profileRepository } from '../../repositories/profileRepository';
+import { clearProfileReminders } from '../../services/medicationReminders';
 import { useReloadOnFocus } from '../shared/useReloadOnFocus';
 
 // ViewModel for one profile's main page (FR01): shows the profile and handles deleting it.
@@ -68,6 +69,7 @@ export function useProfileDetailsViewModel(profileId: string) {
     setDeleteError('');
     try {
       await profileRepository.deleteProfile(profile.id, profile.version);
+      if (account) clearProfileReminders(account.id, profile.id).catch(() => undefined);
       clearSelectedProfile();
       setDeleting(false);
       setConfirmingDelete(false);
