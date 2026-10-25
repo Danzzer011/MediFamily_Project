@@ -1,5 +1,5 @@
 // DEMONSTRATION DATA — see demoDatabase.ts.
-import { AppError } from '@/models/errors';
+import { AppError } from '../../models/errors';
 import type { AuthRepository } from '../authRepository';
 import {
   demoRequest,
