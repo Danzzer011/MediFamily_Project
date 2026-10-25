@@ -1,6 +1,8 @@
-import { Text } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 
-// Temporary placeholder; replaced when this screen is built.
+import HealthInfoScreen from '../../../../views/health/HealthInfoScreen';
+
 export default function Health() {
-  return <Text>Health — not built yet.</Text>;
+  const { profileId } = useLocalSearchParams<{ profileId: string }>();
+  return <HealthInfoScreen profileId={profileId} />;
 }
