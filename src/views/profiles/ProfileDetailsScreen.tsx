@@ -53,10 +53,36 @@ export default function ProfileDetailsScreen({ profileId }: { profileId: string 
           description={vm.isCreator ? 'Invite family members and manage access' : 'See who has access, or leave this profile'}
           href={`/profiles/${profile.id}/sharing`}
         />
-        <MenuItem title="Appointments" description="Doctor visits and reminders" href={`/profiles/${profile.id}/appointments`} />
-        <MenuItem title="Medical documents" description="Prescriptions, lab reports and scans" href={`/profiles/${profile.id}/documents`} />
-        <MenuItem title="Health measurements" description="Blood pressure, blood glucose and weight" href={`/profiles/${profile.id}/measurements`} />
-        {/* Medications, prescriptions, appointments, documents and measurements (Mazen's and Mohab's screens) link from here. */}
+        <MenuItem
+          title="Medications"
+          description="Medication schedules, dosage and daily reminder times"
+          href={`/profiles/${profile.id}/medications`}
+        />
+        <MenuItem
+          title="Medicine stock"
+          description="Remaining quantities and refill alerts"
+          href={`/profiles/${profile.id}/stock`}
+        />
+        <MenuItem
+          title="Prescriptions"
+          description="Doctor, visit date, prescribed medicines and attachments"
+          href={`/profiles/${profile.id}/prescriptions`}
+        />
+        <MenuItem
+          title="Appointments"
+          description="Doctor visits and reminders"
+          href={`/profiles/${profile.id}/appointments`}
+        />
+        <MenuItem
+          title="Medical documents"
+          description="Prescriptions, lab reports and scans"
+          href={`/profiles/${profile.id}/documents`}
+        />
+        <MenuItem
+          title="Health measurements"
+          description="Blood pressure, blood glucose and weight"
+          href={`/profiles/${profile.id}/measurements`}
+        />
       </View>
 
       {vm.isCreator ? (

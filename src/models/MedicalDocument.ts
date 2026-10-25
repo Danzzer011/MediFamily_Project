@@ -1,21 +1,31 @@
 import type { IsoDate, RecordMeta } from './common';
 
-export const DOCUMENT_CATEGORIES = ['prescription', 'lab report', 'scan', 'other'] as const;
+export const DOCUMENT_CATEGORIES = ['prescription', 'lab_report', 'scan', 'other'] as const;
 export type DocumentCategory = (typeof DOCUMENT_CATEGORIES)[number];
 
-export type DocumentFileType = 'image' | 'pdf';
-
-/** The details the user can edit later (FR07). */
-export type DocumentDetails = {
+/**
+ * A medical document (FR07): an image or PDF with its descriptive details.
+ * Prescription attachments (FR04) are stored once as documents like this and linked
+ * to the prescription, so deleting the prescription keeps the document.
+ */
+export type MedicalDocument = RecordMeta & {
+  profileId: string;
   title: string;
   category: DocumentCategory;
   relevantDate: IsoDate;
+  /** Where the file is stored (a private storage path in Phase 2; a local file address in the demo). */
+  storagePath: string;
+  originalFileName: string;
+  mimeType: string;
 };
 
-/** The attached file. Chosen once when adding; editing never replaces it. */
-export type DocumentFile = {
+/** A file the user just took with the camera or chose, before it is uploaded. */
+export type PickedFile = {
+  uri: string;
   fileName: string;
-  fileType: DocumentFileType;
+  mimeType: string;
 };
 
-export type MedicalDocument = RecordMeta & DocumentDetails & DocumentFile & { profileId: string };
+export function isPdf(file: { mimeType: string }): boolean {
+  return file.mimeType === 'application/pdf';
+}
