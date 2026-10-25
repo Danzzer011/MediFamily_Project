@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 
 import type { Appointment, AppointmentStatus } from '../../models/Appointment';
 import { splitTimestamp, toTimestamp, validateDateTime } from '../../models/dateTime';
-import { todayIsoDate } from '../../models/dates';
 import { toAppError } from '../../models/errors';
 import type { FamilyProfile } from '../../models/FamilyProfile';
 import { toOptionalText } from '../../models/validation';
@@ -66,10 +65,13 @@ export function useAppointmentsViewModel(profileId: string) {
     };
   }, [profileId, reloadKey]);
 
+  // times are entered and shown in the profile's time zone, so every caregiver sees the same schedule
+  const zone = profile?.timeZone ?? 'UTC';
+
   function startAdding() {
     setEditing('new');
     setDoctor('');
-    setDate(todayIsoDate());
+    setDate(splitTimestamp(new Date().toISOString(), zone).date);
     setTime('09:00');
     setLocation('');
     setNotes('');
@@ -79,7 +81,7 @@ export function useAppointmentsViewModel(profileId: string) {
   }
 
   function startEditing(appointment: Appointment) {
-    const parts = splitTimestamp(appointment.startsAt);
+    const parts = splitTimestamp(appointment.startsAt, zone);
     setEditing(appointment);
     setDoctor(appointment.doctorName);
     setDate(parts.date);
@@ -108,7 +110,7 @@ export function useAppointmentsViewModel(profileId: string) {
 
     const input = {
       doctorName: doctor.trim(),
-      startsAt: toTimestamp(date, time),
+      startsAt: toTimestamp(date, time, zone),
       location: toOptionalText(location),
       notes: toOptionalText(notes),
       status,

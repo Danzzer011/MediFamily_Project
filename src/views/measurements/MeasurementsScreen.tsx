@@ -35,7 +35,7 @@ export default function MeasurementsScreen({ profileId }: { profileId: string })
     return (
       <Screen>
         <Stack.Screen options={{ title: vm.isNew ? 'New measurement' : 'Edit measurement' }} />
-        <ProfileName name={profile.name} />
+        <ProfileName name={profile.name} timeZone={profile.timeZone} />
         {vm.formError ? <ErrorBanner message={vm.formError} /> : null}
 
         <View style={card}>
@@ -102,7 +102,7 @@ export default function MeasurementsScreen({ profileId }: { profileId: string })
   return (
     <Screen>
       <Stack.Screen options={{ title: `${profile.name} · Measurements` }} />
-      <ProfileName name={profile.name} />
+      <ProfileName name={profile.name} timeZone={profile.timeZone} />
       <Button title="Add measurement" onPress={vm.startAdding} />
 
       <View accessibilityRole="radiogroup" style={styles.chips}>
@@ -123,7 +123,7 @@ export default function MeasurementsScreen({ profileId }: { profileId: string })
               <Text style={[styles.reading, styles.flex, { color: colors.text }]}>{formatReading(m)}</Text>
               <Text style={[styles.badge, { color: colors.primary, borderColor: colors.primary }]}>{capitalize(m.type)}</Text>
             </View>
-            <Text style={[styles.muted, { color: colors.textMuted }]}>{formatTimestamp(m.measuredAt)}</Text>
+            <Text style={[styles.muted, { color: colors.textMuted }]}>{formatTimestamp(m.measuredAt, profile.timeZone)}</Text>
             <View style={styles.actions}>
               <LinkAction label="Edit" accessibilityLabel={`Edit ${m.type} measurement`} onPress={() => vm.startEditing(m)} />
               <LinkAction label="Delete" danger accessibilityLabel={`Delete ${m.type} measurement`} onPress={() => vm.askToDelete(m)} />
