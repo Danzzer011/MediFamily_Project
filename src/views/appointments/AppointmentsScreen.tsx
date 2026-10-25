@@ -33,9 +33,24 @@ export default function AppointmentsScreen({ profileId }: { profileId: string })
   const colors = useThemeColors();
   const vm = useAppointmentsViewModel(profileId);
 
-  if (vm.loading) return <LoadingView message="Loading appointments…" />;
+  // the header shows the page name while loading, on an error and in the list
+  const pageTitle = <Stack.Screen options={{ title: 'Appointments' }} />;
+
+  if (vm.loading) {
+    return (
+      <>
+        {pageTitle}
+        <LoadingView message="Loading appointments…" />
+      </>
+    );
+  }
   if (vm.loadError || !vm.profile) {
-    return <ErrorView message={vm.loadError} actionTitle="Back to profiles" onAction={() => router.dismissTo('/')} />;
+    return (
+      <>
+        {pageTitle}
+        <ErrorView message={vm.loadError} actionTitle="Back to profiles" onAction={() => router.dismissTo('/')} />
+      </>
+    );
   }
   const profile = vm.profile;
   // the profile name is always in the header; the time zone sits at its right
@@ -122,7 +137,7 @@ export default function AppointmentsScreen({ profileId }: { profileId: string })
 
   return (
     <LedgerScreen>
-      <Stack.Screen options={{ title: profile.name, headerBackVisible: true, headerLeft: undefined, headerRight: () => zoneText }} />
+      <Stack.Screen options={{ title: 'Appointments', headerBackVisible: true, headerLeft: undefined, headerRight: () => zoneText }} />
       <PageTitle text="Appointments" />
 
       {vm.next && nextParts ? (

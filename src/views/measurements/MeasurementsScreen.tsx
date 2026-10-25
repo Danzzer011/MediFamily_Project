@@ -29,9 +29,24 @@ export default function MeasurementsScreen({ profileId }: { profileId: string })
   const colors = useThemeColors();
   const vm = useMeasurementsViewModel(profileId);
 
-  if (vm.loading) return <LoadingView message="Loading measurements…" />;
+  // the header shows the page name while loading, on an error and in the list
+  const pageTitle = <Stack.Screen options={{ title: 'Health measurements' }} />;
+
+  if (vm.loading) {
+    return (
+      <>
+        {pageTitle}
+        <LoadingView message="Loading measurements…" />
+      </>
+    );
+  }
   if (vm.loadError || !vm.profile) {
-    return <ErrorView message={vm.loadError} actionTitle="Back to profiles" onAction={() => router.dismissTo('/')} />;
+    return (
+      <>
+        {pageTitle}
+        <ErrorView message={vm.loadError} actionTitle="Back to profiles" onAction={() => router.dismissTo('/')} />
+      </>
+    );
   }
   const profile = vm.profile;
 
@@ -136,7 +151,7 @@ export default function MeasurementsScreen({ profileId }: { profileId: string })
   // ---- list ----
   return (
     <LedgerScreen>
-      <Stack.Screen options={{ title: profile.name, headerBackVisible: true, headerLeft: undefined }} />
+      <Stack.Screen options={{ title: 'Health measurements', headerBackVisible: true, headerLeft: undefined }} />
       <PageTitle text="Health measurements" />
       {vm.total > 0 ? (
         <>
