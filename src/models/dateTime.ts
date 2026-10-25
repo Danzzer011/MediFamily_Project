@@ -7,7 +7,7 @@ const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 export function validateDateTime(date: string, time: string): { date: string | null; time: string | null } {
   return {
     date: !date.trim() ? 'Enter the date.' : isValidIsoDate(date.trim()) ? null : 'Use the format YYYY-MM-DD, e.g. 2026-11-03.',
-    time: !time.trim() ? 'Enter the time.' : TIME_PATTERN.test(time.trim()) ? null : 'Use the format HH:MM (24-hour), e.g. 14:30.',
+    time: TIME_PATTERN.test(time.trim()) ? null : 'Enter the time, like 18:30.',
   };
 }
 
@@ -54,4 +54,29 @@ export function splitTimestamp(timestamp: IsoTimestamp, timeZone: string): { dat
 export function formatTimestamp(timestamp: IsoTimestamp, timeZone: string): string {
   const { date, time } = splitTimestamp(timestamp, timeZone);
   return `${formatIsoDate(date)}, ${time}`;
+}
+
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+// The pieces a list row shows ("05", "NOV", "THU", "18:30"), read in the profile's time zone.
+export function dayParts(timestamp: IsoTimestamp, timeZone: string) {
+  const { date, time } = splitTimestamp(timestamp, timeZone);
+  const [year, month, day] = date.split('-').map(Number);
+  const weekday = WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
+  return { day: String(day).padStart(2, '0'), month: MONTHS[month - 1], weekday, year: String(year), time };
+}
+
+// Whole calendar days from today to that moment (0 = today), both read in the profile's time zone.
+export function daysUntil(timestamp: IsoTimestamp, timeZone: string, now: Date = new Date()): number {
+  const midnight = (iso: string) => {
+    const [y, m, d] = splitTimestamp(iso, timeZone).date.split('-').map(Number);
+    return Date.UTC(y, m - 1, d);
+  };
+  return Math.round((midnight(timestamp) - midnight(now.toISOString())) / 86400000);
+}
+
+// "Africa/Cairo" -> "Cairo time"
+export function zoneLabel(timeZone: string): string {
+  return `${(timeZone.split('/').pop() ?? timeZone).replace(/_/g, ' ')} time`;
 }

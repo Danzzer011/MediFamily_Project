@@ -1,23 +1,32 @@
 import { router, Stack } from 'expo-router';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import Button from '../../components/Button';
-import ChoiceChip from '../../components/ChoiceChip';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import DemoDataNotice from '../../components/DemoDataNotice';
 import ErrorBanner from '../../components/ErrorBanner';
 import ErrorView from '../../components/ErrorView';
+import DateColumn from '../../components/ledger/DateColumn';
+import HeaderCancel from '../../components/ledger/HeaderCancel';
+import Icon from '../../components/ledger/Icon';
+import LedgerField from '../../components/ledger/LedgerField';
+import LedgerList from '../../components/ledger/LedgerList';
+import LedgerScreen from '../../components/ledger/LedgerScreen';
+import Pill from '../../components/ledger/Pill';
+import SectionLabel from '../../components/ledger/SectionLabel';
+import Segmented from '../../components/ledger/Segmented';
 import LinkAction from '../../components/LinkAction';
 import LoadingView from '../../components/LoadingView';
-import ProfileName from '../../components/ProfileName';
-import Screen from '../../components/Screen';
-import TextField from '../../components/TextField';
-import { APPOINTMENT_STATUSES } from '../../models/Appointment';
-import { formatTimestamp } from '../../models/dateTime';
+import { APPOINTMENT_STATUSES, type Appointment } from '../../models/Appointment';
+import { dayParts, splitTimestamp, zoneLabel } from '../../models/dateTime';
+import { formatIsoDate } from '../../models/dates';
 import { useThemeColors } from '../../theme';
+import { monoFont, useStatusStyles } from '../../theme/medifamily-theme';
 import { useAppointmentsViewModel } from '../../viewmodels/appointments/useAppointmentsViewModel';
 
-// Appointments page (FR05): list of the selected profile's appointments with an add/edit form.
+const STATUS_OPTIONS = APPOINTMENT_STATUSES.map((value) => ({ value, label: capitalize(value) }));
+
+// Appointments page (FR05): the selected profile's appointments, with an add/edit form.
 export default function AppointmentsScreen({ profileId }: { profileId: string }) {
   const colors = useThemeColors();
   const vm = useAppointmentsViewModel(profileId);
@@ -27,119 +36,208 @@ export default function AppointmentsScreen({ profileId }: { profileId: string })
     return <ErrorView message={vm.loadError} actionTitle="Back to profiles" onAction={() => router.dismissTo('/')} />;
   }
   const profile = vm.profile;
+  // the profile name is always in the header; the time zone sits at its right
+  const zoneText = <Text style={[styles.zone, { color: colors.textMuted }]}>{zoneLabel(profile.timeZone)}</Text>;
 
   // ---- add / edit form ----
   if (vm.editing) {
+    const pending = vm.pendingDelete;
+    const deleted = pending ? splitTimestamp(pending.startsAt, vm.zone) : null;
     return (
-      <Screen>
-        <Stack.Screen options={{ title: vm.isNew ? 'New appointment' : 'Edit appointment' }} />
-        <ProfileName name={profile.name} timeZone={profile.timeZone} />
+      <LedgerScreen>
+        <Stack.Screen
+          options={{ title: profile.name, headerBackVisible: false, headerLeft: () => <HeaderCancel onPress={vm.cancelEditing} />, headerRight: () => zoneText }}
+        />
+        <Title text={vm.isNew ? 'New appointment' : 'Edit appointment'} />
         {vm.formError ? <ErrorBanner message={vm.formError} /> : null}
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <TextField label="Doctor name" value={vm.doctor} onChangeText={vm.setDoctor} error={vm.errors.doctor} autoCapitalize="words" />
-          <TextField
-            label="Date"
-            value={vm.date}
-            onChangeText={vm.setDate}
-            error={vm.errors.date}
-            placeholder="YYYY-MM-DD"
-            keyboardType="numbers-and-punctuation"
-          />
-          <TextField
-            label="Time (24-hour)"
-            value={vm.time}
-            onChangeText={vm.setTime}
-            error={vm.errors.time}
-            placeholder="HH:MM"
-            keyboardType="numbers-and-punctuation"
-          />
-          <TextField label="Location (optional)" value={vm.location} onChangeText={vm.setLocation} />
-          <TextField label="Notes (optional)" value={vm.notes} onChangeText={vm.setNotes} multiline />
-        </View>
-
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Status</Text>
-          <View accessibilityRole="radiogroup" style={styles.chips}>
-            {APPOINTMENT_STATUSES.map((s) => (
-              <ChoiceChip key={s} label={capitalize(s)} selected={vm.status === s} onPress={() => vm.setStatus(s)} />
-            ))}
+        <View style={styles.form}>
+          <LedgerField label="Doctor name" tag="Required" value={vm.doctor} onChangeText={vm.setDoctor} error={vm.errors.doctor} autoCapitalize="words" />
+          <View style={styles.pair}>
+            <View style={styles.wide}>
+              <LedgerField
+                label="Date"
+                tag="Required"
+                mono
+                value={vm.date}
+                onChangeText={vm.setDate}
+                error={vm.errors.date}
+                placeholder="YYYY-MM-DD"
+                keyboardType="numbers-and-punctuation"
+              />
+            </View>
+            <View style={styles.narrow}>
+              <LedgerField
+                label="Time"
+                tag="Required"
+                mono
+                value={vm.time}
+                onChangeText={vm.setTime}
+                error={vm.errors.time}
+                placeholder="18:30"
+                keyboardType="numbers-and-punctuation"
+              />
+            </View>
           </View>
-          <Text style={[styles.muted, { color: colors.textMuted }]}>
-            The status only changes when you change it here, even after the date has passed. A follow-up visit is a new appointment.
-          </Text>
+          <LedgerField label="Location" tag="Optional" value={vm.location} onChangeText={vm.setLocation} />
+          <LedgerField label="Notes" tag="Optional" value={vm.notes} onChangeText={vm.setNotes} multiline />
+          <View style={styles.status}>
+            <Text style={[styles.label, { color: colors.text }]}>Status</Text>
+            <Segmented options={STATUS_OPTIONS} selected={vm.status} onSelect={vm.setStatus} />
+            <Text style={[styles.hint, { color: colors.textMuted }]}>
+              {vm.isNew
+                ? 'New appointments start as Scheduled. You change the status yourself later.'
+                : 'The status only changes when you change it, even after the date has passed.'}
+            </Text>
+          </View>
         </View>
-
-        <Button title="Save appointment" loading={vm.saving} onPress={vm.save} />
-        <Button title="Cancel" variant="secondary" disabled={vm.saving} onPress={vm.cancelEditing} />
-        <DemoDataNotice />
-      </Screen>
+        <View style={[styles.dock, { borderColor: colors.border }]}>
+          <Button title={vm.isNew ? 'Save appointment' : 'Save changes'} loading={vm.saving} onPress={vm.save} />
+          {typeof vm.editing === 'object' ? (
+            <View style={styles.deleteGap}>
+              <Button title="Delete appointment" variant="danger" disabled={vm.saving} onPress={() => vm.askToDelete(vm.editing as Appointment)} />
+            </View>
+          ) : null}
+        </View>
+        <ConfirmDialog
+          visible={pending !== null}
+          title="Delete this appointment?"
+          message={`The visit with ${pending?.doctorName ?? ''} on ${deleted ? formatIsoDate(deleted.date) : ''} at ${deleted?.time ?? ''} will be deleted for ${profile.name}. This cannot be undone.`}
+          confirmTitle="Delete"
+          destructive
+          loading={vm.deleting}
+          error={vm.deleteError}
+          onConfirm={vm.confirmDelete}
+          onCancel={vm.cancelDelete}
+        />
+      </LedgerScreen>
     );
   }
 
   // ---- list ----
+  const nextParts = vm.next ? dayParts(vm.next.startsAt, vm.zone) : null;
+  const daysLabel = vm.daysToNext <= 0 ? 'today' : vm.daysToNext === 1 ? 'tomorrow' : `in ${vm.daysToNext} days`;
+
   return (
-    <Screen>
-      <Stack.Screen options={{ title: `${profile.name} · Appointments` }} />
-      <ProfileName name={profile.name} timeZone={profile.timeZone} />
+    <LedgerScreen>
+      <Stack.Screen options={{ title: profile.name, headerBackVisible: true, headerLeft: undefined, headerRight: () => zoneText }} />
+      <Title text="Appointments" />
 
-      <View style={[styles.card, styles.switchRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <View style={styles.switchText}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Appointment reminders</Text>
-          <Text style={[styles.muted, { color: colors.textMuted }]}>For this profile, on this phone only.</Text>
+      {vm.next && nextParts ? (
+        <View style={[styles.next, { borderColor: colors.text, backgroundColor: colors.surface }]}>
+          <Text style={[styles.nextLabel, { color: colors.primary }]}>{`Next · ${daysLabel}`}</Text>
+          <Text style={[styles.nextName, { color: colors.text }]}>{vm.next.doctorName}</Text>
+          <Text style={[styles.nextLine, { color: colors.text }]} numberOfLines={1}>
+            <Text style={{ fontFamily: monoFont }}>{`${capitalize(nextParts.weekday.toLowerCase())} ${Number(nextParts.day)} ${capitalize(nextParts.month.toLowerCase())} · ${nextParts.time}`}</Text>
+            {vm.next.location ? ` · ${vm.next.location}` : ''}
+          </Text>
         </View>
-        <Switch
-          accessibilityLabel="Appointment reminders for this profile on this phone"
-          value={vm.remindersOn}
-          onValueChange={vm.setRemindersOn}
-          trackColor={{ true: colors.primary }}
-        />
-      </View>
+      ) : null}
 
-      <Button title="Add appointment" onPress={vm.startAdding} />
+      <Pressable
+        accessibilityRole="switch"
+        accessibilityState={{ checked: vm.remindersOn }}
+        accessibilityLabel={`Appointment reminders for ${profile.name} on this phone`}
+        onPress={() => vm.setRemindersOn(!vm.remindersOn)}
+        style={[styles.reminders, { borderColor: colors.border }]}>
+        <Icon name="bell" size={20} color={colors.text} />
+        <View style={styles.remindersText}>
+          <Text style={[styles.remindersTitle, { color: colors.text }]}>Reminders on this phone</Text>
+          <Text style={[styles.hint, { color: colors.textMuted }]}>{`Only for ${profile.name}`}</Text>
+        </View>
+        <View pointerEvents="none">
+          <Switch value={vm.remindersOn} trackColor={{ false: colors.border, true: colors.primary }} thumbColor={colors.surface} />
+        </View>
+      </Pressable>
+
       {vm.exportMessage ? (
         <Text accessibilityRole="alert" style={[styles.notice, { backgroundColor: colors.notice, color: colors.text }]}>
           {vm.exportMessage}
         </Text>
       ) : null}
 
-      {vm.appointments.length === 0 ? (
-        <Text style={[styles.muted, { color: colors.textMuted }]}>No appointments yet.</Text>
-      ) : (
-        vm.appointments.map((a) => (
-          <View key={a.id} style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <View style={styles.rowTop}>
-              <Text style={[styles.sectionTitle, styles.flex, { color: colors.text }]}>{a.doctorName}</Text>
-              <Text style={[styles.badge, { color: colors.primary, borderColor: colors.primary }]}>{capitalize(a.status)}</Text>
-            </View>
-            <Text style={[styles.body, { color: colors.text }]}>{formatTimestamp(a.startsAt, profile.timeZone)}</Text>
-            {a.location ? <Text style={[styles.muted, { color: colors.textMuted }]}>{a.location}</Text> : null}
-            {a.notes ? <Text style={[styles.muted, { color: colors.textMuted }]}>{a.notes}</Text> : null}
-
-            {a.status === 'scheduled' ? (
-              <Button title="Export to Google Calendar" variant="secondary" onPress={() => vm.exportToGoogleCalendar(a)} />
-            ) : null}
-            <View style={styles.actions}>
-              <LinkAction label="Edit" accessibilityLabel={`Edit appointment with ${a.doctorName}`} onPress={() => vm.startEditing(a)} />
-              <LinkAction label="Delete" danger accessibilityLabel={`Delete appointment with ${a.doctorName}`} onPress={() => vm.askToDelete(a)} />
-            </View>
+      {vm.hasAppointments ? (
+        <>
+          {vm.upcoming.length > 0 ? (
+            <>
+              <SectionLabel label="Coming up" count={vm.upcoming.length} />
+              <LedgerList>
+                {vm.upcoming.map((a) => (
+                  <AppointmentRow key={a.id} appointment={a} zone={vm.zone} onOpen={() => vm.startEditing(a)} onExport={() => vm.exportToGoogleCalendar(a)} />
+                ))}
+              </LedgerList>
+            </>
+          ) : null}
+          {vm.earlier.length > 0 ? (
+            <>
+              <SectionLabel label="Earlier" count={vm.earlier.length} />
+              <LedgerList>
+                {vm.earlier.map((a) => (
+                  <AppointmentRow key={a.id} appointment={a} zone={vm.zone} onOpen={() => vm.startEditing(a)} onExport={() => vm.exportToGoogleCalendar(a)} />
+                ))}
+              </LedgerList>
+            </>
+          ) : null}
+          <View style={[styles.dock, { borderColor: colors.border }]}>
+            <Button title="New appointment" onPress={vm.startAdding} />
           </View>
-        ))
+        </>
+      ) : (
+        <View style={styles.empty}>
+          <Text accessibilityRole="header" style={[styles.emptyTitle, { color: colors.text }]}>{`Nothing booked for ${profile.name}.`}</Text>
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>Add the first appointment. Doctor, date and time are enough.</Text>
+          <Button title="Add the first appointment" onPress={vm.startAdding} />
+        </View>
       )}
 
-      <DemoDataNotice />
+      <View style={styles.notice2}>
+        <DemoDataNotice />
+      </View>
+    </LedgerScreen>
+  );
+}
 
-      <ConfirmDialog
-        visible={vm.pendingDelete !== null}
-        title="Delete appointment?"
-        message={`The appointment with ${vm.pendingDelete?.doctorName ?? ''} will be deleted for ${profile.name}. This cannot be undone.`}
-        confirmTitle="Delete"
-        destructive
-        loading={vm.deleting}
-        error={vm.deleteError}
-        onConfirm={vm.confirmDelete}
-        onCancel={vm.cancelDelete}
-      />
-    </Screen>
+// One appointment: a colour bar for the status, the date, the name and time, details, status chip.
+function AppointmentRow({ appointment: a, zone, onOpen, onExport }: { appointment: Appointment; zone: string; onOpen: () => void; onExport: () => void }) {
+  const colors = useThemeColors();
+  const statuses = useStatusStyles();
+  const s = statuses[a.status];
+  const p = dayParts(a.startsAt, zone);
+
+  // The Export button sits next to the tappable row, not inside it (a button cannot contain a button on the web).
+  return (
+    <View style={styles.row}>
+      <View style={[styles.bar, { backgroundColor: s.fg }]} />
+      <View style={styles.rowMain}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Edit appointment with ${a.doctorName}`} onPress={onOpen} style={styles.rowTap}>
+          <DateColumn top={`${p.day} ${p.month}`} bottom={p.weekday} />
+          <View style={styles.body}>
+            <View style={styles.line}>
+              <Text style={[styles.name, { color: colors.text }]}>{a.doctorName}</Text>
+              <Text style={[styles.time, { color: colors.text, fontFamily: monoFont }]}>{p.time}</Text>
+            </View>
+            {a.location ? <Text style={[styles.small, { color: colors.textMuted }]}>{a.location}</Text> : null}
+            {a.notes ? <Text style={[styles.small, styles.notes, { color: colors.text }]}>{a.notes}</Text> : null}
+            <View style={styles.chips}>
+              <Pill label={capitalize(a.status)} color={s.fg} background={s.bg} icon={a.status} />
+            </View>
+          </View>
+        </Pressable>
+        {a.status === 'scheduled' ? (
+          <View style={styles.exportRow}>
+            <LinkAction label="Export to Google Calendar" icon="calendar-plus" accessibilityLabel={`Export the visit with ${a.doctorName} to Google Calendar`} onPress={onExport} />
+          </View>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function Title({ text }: { text: string }) {
+  const colors = useThemeColors();
+  return (
+    <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>
+      {text}
+    </Text>
   );
 }
 
@@ -148,16 +246,39 @@ function capitalize(text: string) {
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderRadius: 20, padding: 20, gap: 12 },
-  sectionTitle: { fontSize: 17, fontWeight: '700' },
-  body: { fontSize: 16, lineHeight: 22 },
-  muted: { fontSize: 14, lineHeight: 20 },
-  notice: { fontSize: 14, lineHeight: 20, borderRadius: 12, padding: 12 },
-  flex: { flex: 1 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  switchRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  switchText: { flex: 1, gap: 2 },
-  rowTop: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  badge: { fontSize: 13, fontWeight: '700', borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2 },
-  actions: { flexDirection: 'row', gap: 16 },
+  zone: { fontSize: 13 },
+  title: { fontSize: 24, lineHeight: 30, fontWeight: '700', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 10 },
+  next: { marginHorizontal: 16, marginBottom: 12, borderWidth: 1.5, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10 },
+  nextLabel: { fontSize: 13, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
+  nextName: { fontSize: 18, lineHeight: 24, fontWeight: '700', marginVertical: 2 },
+  nextLine: { fontSize: 14 },
+  reminders: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, minHeight: 56, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1 },
+  remindersText: { flex: 1 },
+  remindersTitle: { fontSize: 15, fontWeight: '600' },
+  hint: { fontSize: 13, lineHeight: 18 },
+  notice: { marginHorizontal: 16, marginTop: 12, fontSize: 14, lineHeight: 20, borderRadius: 12, padding: 12 },
+  notice2: { paddingHorizontal: 16, paddingTop: 20 },
+  row: { flexDirection: 'row', gap: 12, paddingVertical: 12, paddingRight: 16 },
+  rowMain: { flex: 1, minWidth: 0 },
+  rowTap: { flexDirection: 'row', gap: 12 },
+  exportRow: { paddingLeft: 70 }, // lines up under the name (58 px date column + 12 px gap)
+  bar: { width: 4, alignSelf: 'stretch', borderTopRightRadius: 2, borderBottomRightRadius: 2 },
+  body: { flex: 1, minWidth: 0 },
+  line: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
+  name: { flex: 1, fontSize: 16, fontWeight: '700' },
+  time: { fontSize: 14, lineHeight: 22, fontWeight: '600' },
+  small: { fontSize: 14, lineHeight: 20, marginTop: 2 },
+  notes: { marginTop: 4 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 10, marginTop: 6 },
+  dock: { marginTop: 20, paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1 },
+  deleteGap: { marginTop: 16 },
+  empty: { paddingHorizontal: 16, paddingTop: 24, gap: 8 },
+  emptyTitle: { fontSize: 24, lineHeight: 30, fontWeight: '700' },
+  emptyText: { fontSize: 16, lineHeight: 22, marginBottom: 10 },
+  form: { paddingHorizontal: 16, gap: 14 },
+  pair: { flexDirection: 'row', gap: 12 },
+  wide: { flex: 1.25 },
+  narrow: { flex: 1 },
+  status: { gap: 6 },
+  label: { fontSize: 15, fontWeight: '600' },
 });
