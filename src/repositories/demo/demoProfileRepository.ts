@@ -135,5 +135,8 @@ export const demoProfileRepository: ProfileRepository = {
     removeWhere(demoTables.profiles, (p) => p.id === profileId);
     removeWhere(demoTables.memberships, (m) => m.profileId === profileId);
     removeWhere(demoTables.invitations, (i) => i.profileId === profileId);
+    removeWhere(demoTables.medications, (m) => m.profileId === profileId);
+    removeWhere(demoTables.prescriptions, (p) => p.profileId === profileId);
+    removeWhere(demoTables.documents, (d) => d.profileId === profileId);
   },
 };
