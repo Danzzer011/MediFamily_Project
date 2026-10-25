@@ -1,16 +1,28 @@
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 
 import { isValidIsoDate, todayIsoDate } from '../../models/dates';
-import { toAppError } from '../../models/errors';
+import { AppError, toAppError } from '../../models/errors';
 import type { FamilyProfile } from '../../models/FamilyProfile';
-import type { DocumentCategory, DocumentFile, MedicalDocument } from '../../models/MedicalDocument';
+import type { DocumentCategory, MedicalDocument, PickedFile } from '../../models/MedicalDocument';
 import { documentRepository } from '../../repositories/documentRepository';
 import { profileRepository } from '../../repositories/profileRepository';
+import { chooseImage, choosePdf, takePhoto } from '../../services/filePickerService';
 import { useReloadOnFocus } from '../shared/useReloadOnFocus';
 
 type Mode = 'list' | 'add' | 'view' | 'edit';
 type FormErrors = { title: string; category: string; date: string; file: string };
 const NO_ERRORS: FormErrors = { title: '', category: '', date: '', file: '' };
+
+export type FileSource = 'camera' | 'image' | 'pdf';
+
+const CAMERA_UNAVAILABLE = 'The camera is not available here. Use “Choose file”, or open MediFamily on your phone.';
+
+// The camera or the file window can fail (blocked, or missing). Say so instead of crashing.
+function pickMessage(error: unknown, source: FileSource): string {
+  if (error instanceof AppError) return error.message;
+  return source === 'camera' ? CAMERA_UNAVAILABLE : 'That file could not be opened. Try another one.';
+}
 
 // ViewModel for the Medical Documents page (FR07): list, add, open, edit details and delete.
 export function useDocumentsViewModel(profileId: string) {
@@ -28,7 +40,9 @@ export function useDocumentsViewModel(profileId: string) {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<DocumentCategory | null>(null);
   const [date, setDate] = useState('');
-  const [file, setFile] = useState<DocumentFile | null>(null);
+  const [file, setFile] = useState<PickedFile | null>(null);
+  const [choosingKind, setChoosingKind] = useState(false); // "Choose file" is open and asks: image or PDF?
+  const [picking, setPicking] = useState(false);
   const [errors, setErrors] = useState<FormErrors>(NO_ERRORS);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -64,6 +78,7 @@ export function useDocumentsViewModel(profileId: string) {
     setCategory(null);
     setDate(todayIsoDate());
     setFile(null);
+    setChoosingKind(false);
     setErrors(NO_ERRORS);
     setFormError('');
     setMode('add');
@@ -97,18 +112,28 @@ export function useDocumentsViewModel(profileId: string) {
     setFile(null);
   }
 
-  // Phase 1: buttons only. Real camera and file picking come in Phase 2, so we attach a labelled demo file.
-  function attachDemoFile(demoFile: DocumentFile) {
-    setFile(demoFile);
+  function toggleChoosingKind() {
+    setChoosingKind((open) => !open);
+  }
+
+  // Takes a photo or chooses an image or PDF with the team's file picker.
+  async function pickFile(source: FileSource) {
+    if (picking) return;
+    setChoosingKind(false);
+    // a desktop browser never answers the camera request, which would also block the other buttons
+    if (source === 'camera' && Platform.OS === 'web') {
+      setErrors((current) => ({ ...current, file: CAMERA_UNAVAILABLE }));
+      return;
+    }
+    setPicking(true);
     setErrors((current) => ({ ...current, file: '' }));
-  }
-
-  function takePhoto() {
-    attachDemoFile({ fileName: 'photo-demo.jpg', fileType: 'image' });
-  }
-
-  function chooseFile() {
-    attachDemoFile({ fileName: 'document-demo.pdf', fileType: 'pdf' });
+    try {
+      const picked = source === 'camera' ? await takePhoto() : source === 'image' ? await chooseImage() : await choosePdf();
+      if (picked) setFile(picked);
+    } catch (error) {
+      setErrors((current) => ({ ...current, file: pickMessage(error, source) }));
+    }
+    setPicking(false);
   }
 
   async function save() {
@@ -175,6 +200,8 @@ export function useDocumentsViewModel(profileId: string) {
     category,
     date,
     file,
+    choosingKind,
+    picking,
     errors,
     formError,
     saving,
@@ -187,8 +214,8 @@ export function useDocumentsViewModel(profileId: string) {
     backToList,
     cancelForm,
     clearFile,
-    takePhoto,
-    chooseFile,
+    toggleChoosingKind,
+    pickFile,
     save,
     pendingDelete,
     deleting,
