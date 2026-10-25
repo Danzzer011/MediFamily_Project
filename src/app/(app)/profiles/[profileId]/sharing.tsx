@@ -1,6 +1,8 @@
-import { Text } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 
-// Temporary placeholder; replaced when this screen is built.
+import SharingScreen from '../../../../views/sharing/SharingScreen';
+
 export default function Sharing() {
-  return <Text>Sharing — not built yet.</Text>;
+  const { profileId } = useLocalSearchParams<{ profileId: string }>();
+  return <SharingScreen profileId={profileId} />;
 }
