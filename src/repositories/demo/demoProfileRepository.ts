@@ -1,6 +1,12 @@
 // DEMONSTRATION DATA — see demoDatabase.ts.
 import { AppError } from '../../models/errors';
-import type { FamilyProfile } from '../../models/FamilyProfile';
+import {
+  BLOOD_TYPES,
+  type FamilyProfile,
+  type HealthInformation,
+  type ProfileBasicInput,
+} from '../../models/FamilyProfile';
+import { validateDateOfBirth, validateEmergencyContact, validateProfileName } from '../../models/validation';
 import type { ProfileRepository } from '../profileRepository';
 import {
   copyProfile,
@@ -14,6 +20,24 @@ import {
   removeWhere,
   requireDemoAccount,
 } from './demoDatabase';
+
+// The backend checks the same rules as the forms (database constraints in Phase 2).
+function checkBasicInput(input: ProfileBasicInput): void {
+  const problem = validateProfileName(input.name) ?? validateDateOfBirth(input.dateOfBirth);
+  if (problem) throw new AppError('validation', problem);
+}
+
+function checkHealthInformation(info: HealthInformation): void {
+  if (info.bloodType !== null && !BLOOD_TYPES.includes(info.bloodType)) {
+    throw new AppError('validation', 'Choose a valid blood type.');
+  }
+  for (const contact of info.emergencyContacts) {
+    const problems = validateEmergencyContact(contact);
+    if (problems.name || problems.phone) {
+      throw new AppError('validation', 'Every emergency contact needs a name and a valid telephone number.');
+    }
+  }
+}
 
 function deviceTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC';
@@ -57,7 +81,7 @@ export const demoProfileRepository: ProfileRepository = {
   async createProfile(input) {
     await demoRequest('write');
     const account = requireDemoAccount();
-    if (!input.name.trim() || !input.dateOfBirth) throw new AppError('validation');
+    checkBasicInput(input);
     const time = nowIso();
     const profile: FamilyProfile = {
       id: newDemoId('profile'),
@@ -80,6 +104,7 @@ export const demoProfileRepository: ProfileRepository = {
 
   async updateBasicInfo(profileId, expectedVersion, input) {
     await demoRequest('write');
+    checkBasicInput(input);
     return applyVersionedChange(profileId, expectedVersion, {
       name: input.name.trim(),
       dateOfBirth: input.dateOfBirth,
@@ -88,6 +113,7 @@ export const demoProfileRepository: ProfileRepository = {
 
   async updateHealthInformation(profileId, expectedVersion, info) {
     await demoRequest('write');
+    checkHealthInformation(info);
     return applyVersionedChange(profileId, expectedVersion, {
       bloodType: info.bloodType,
       allergies: info.allergies,
