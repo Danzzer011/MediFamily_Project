@@ -33,7 +33,7 @@ export default function AppointmentsScreen({ profileId }: { profileId: string })
     return (
       <Screen>
         <Stack.Screen options={{ title: vm.isNew ? 'New appointment' : 'Edit appointment' }} />
-        <ProfileName name={profile.name} />
+        <ProfileName name={profile.name} timeZone={profile.timeZone} />
         {vm.formError ? <ErrorBanner message={vm.formError} /> : null}
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <TextField label="Doctor name" value={vm.doctor} onChangeText={vm.setDoctor} error={vm.errors.doctor} autoCapitalize="words" />
@@ -80,7 +80,7 @@ export default function AppointmentsScreen({ profileId }: { profileId: string })
   return (
     <Screen>
       <Stack.Screen options={{ title: `${profile.name} · Appointments` }} />
-      <ProfileName name={profile.name} />
+      <ProfileName name={profile.name} timeZone={profile.timeZone} />
 
       <View style={[styles.card, styles.switchRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <View style={styles.switchText}>
@@ -111,7 +111,7 @@ export default function AppointmentsScreen({ profileId }: { profileId: string })
               <Text style={[styles.sectionTitle, styles.flex, { color: colors.text }]}>{a.doctorName}</Text>
               <Text style={[styles.badge, { color: colors.primary, borderColor: colors.primary }]}>{capitalize(a.status)}</Text>
             </View>
-            <Text style={[styles.body, { color: colors.text }]}>{formatTimestamp(a.startsAt)}</Text>
+            <Text style={[styles.body, { color: colors.text }]}>{formatTimestamp(a.startsAt, profile.timeZone)}</Text>
             {a.location ? <Text style={[styles.muted, { color: colors.textMuted }]}>{a.location}</Text> : null}
             {a.notes ? <Text style={[styles.muted, { color: colors.textMuted }]}>{a.notes}</Text> : null}
 

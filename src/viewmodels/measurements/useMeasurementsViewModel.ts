@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 
 import { splitTimestamp, toTimestamp, validateDateTime } from '../../models/dateTime';
-import { todayIsoDate } from '../../models/dates';
 import { toAppError } from '../../models/errors';
 import type { FamilyProfile } from '../../models/FamilyProfile';
 import { UNITS_BY_TYPE, type Measurement, type MeasurementType, type MeasurementUnit } from '../../models/Measurement';
@@ -78,10 +77,13 @@ export function useMeasurementsViewModel(profileId: string) {
     setErrors(NO_ERRORS);
   }
 
+  // times are entered and shown in the profile's time zone, so every caregiver sees the same schedule
+  const zone = profile?.timeZone ?? 'UTC';
+
   function startAdding() {
     setEditing('new');
     changeType(filter === 'all' ? 'blood pressure' : filter);
-    setDate(todayIsoDate());
+    setDate(splitTimestamp(new Date().toISOString(), zone).date);
     setTime('08:00');
     setValue('');
     setDiastolic('');
@@ -89,7 +91,7 @@ export function useMeasurementsViewModel(profileId: string) {
   }
 
   function startEditing(measurement: Measurement) {
-    const parts = splitTimestamp(measurement.measuredAt);
+    const parts = splitTimestamp(measurement.measuredAt, zone);
     setEditing(measurement);
     setType(measurement.type);
     setUnit(measurement.unit);
@@ -122,7 +124,7 @@ export function useMeasurementsViewModel(profileId: string) {
 
     const input = {
       type,
-      measuredAt: toTimestamp(date, time),
+      measuredAt: toTimestamp(date, time, zone),
       value: first,
       diastolic: isPressure ? second : null,
       unit,
