@@ -1,7 +1,7 @@
 // DEMONSTRATION DATA — see demoDatabase.ts.
-import { AppError } from '@/models/errors';
-import type { FamilyProfile } from '@/models/FamilyProfile';
-import type { ProfileInvitation } from '@/models/Sharing';
+import { AppError } from '../../models/errors';
+import type { FamilyProfile } from '../../models/FamilyProfile';
+import type { ProfileInvitation } from '../../models/Sharing';
 import type { SharingRepository } from '../sharingRepository';
 import {
   demoRequest,

@@ -3,7 +3,7 @@ import type {
   HealthInformation,
   ProfileBasicInput,
   ProfileSummary,
-} from '@/models/FamilyProfile';
+} from '../models/FamilyProfile';
 import { demoProfileRepository } from './demo/demoProfileRepository';
 
 /**
@@ -12,7 +12,7 @@ import { demoProfileRepository } from './demo/demoProfileRepository';
  * the version that was loaded and throw `AppError('stale_record')` if the
  * profile has changed since.
  */
-export interface ProfileRepository {
+export type ProfileRepository = {
   /** Profiles the account created or accepted an invitation to. */
   listAccessibleProfiles(): Promise<ProfileSummary[]>;
   getProfile(profileId: string): Promise<FamilyProfile>;
@@ -29,7 +29,7 @@ export interface ProfileRepository {
   ): Promise<FamilyProfile>;
   /** Creator only. Removes the profile with all its records, members and invitations. */
   deleteProfile(profileId: string, expectedVersion: number): Promise<void>;
-}
+};
 
 // Phase 1: demonstration data. Replace with the Supabase adapter in Phase 2.
 export const profileRepository: ProfileRepository = demoProfileRepository;

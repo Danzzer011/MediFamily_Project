@@ -1,16 +1,21 @@
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
-import { Screen } from '@/components/Screen';
-import { DemoDataNotice } from '@/components/StatusViews';
-import { useThemeColors } from '@/theme';
+import DemoDataNotice from '../../components/DemoDataNotice';
+import Screen from '../../components/Screen';
+import { useThemeColors } from '../../theme';
 
-// Placeholder route until the Register View is built.
-export default function Placeholder() {
+// Placeholder page until the Register View is built.
+export default function Register() {
   const colors = useThemeColors();
+
   return (
     <Screen>
       <DemoDataNotice />
-      <Text style={{ color: colors.text }}>Register screen — not built yet.</Text>
+      <Text style={[styles.text, { color: colors.text }]}>Register page — not built yet.</Text>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  text: { fontSize: 16 },
+});

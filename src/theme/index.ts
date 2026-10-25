@@ -1,47 +1,61 @@
 import { DarkTheme, DefaultTheme, type Theme } from 'expo-router';
 import { useColorScheme } from 'react-native';
 
+/** MediFamily light palette. */
 const lightColors = {
-  background: '#F5F7FA',
+  /** Page background (soft off-white). */
+  background: '#F5FAF9',
+  /** Cards and input backgrounds. */
   surface: '#FFFFFF',
-  text: '#1A1F2B',
-  textMuted: '#5B6475',
-  border: '#D5DBE5',
-  primary: '#1F6FEB',
+  /** Main text (deep navy). */
+  text: '#16324F',
+  /** Secondary text, hints and captions. */
+  textMuted: '#52625E',
+  border: '#D3E2DF',
+  /** Brand teal: primary buttons, links and focused inputs. */
+  primary: '#0F766E',
   onPrimary: '#FFFFFF',
-  danger: '#C62828',
+  danger: '#B42318',
   onDanger: '#FFFFFF',
-  /** Background for the "demo data" banner and other notices. */
-  notice: '#FFF4D6',
-  onNotice: '#6B4E00',
+  /** Tinted background behind error messages. */
+  dangerSurface: '#FEF3F2',
+  /** Quiet background for secondary notices such as the demo-data notice. */
+  notice: '#EAF3F1',
+  onNotice: '#52625E',
 };
 
 export type ThemeColors = typeof lightColors;
 
+/** Dark counterparts that keep the same teal and navy character. */
 const darkColors: ThemeColors = {
-  background: '#0F1218',
-  surface: '#1A1F2B',
-  text: '#ECEFF4',
-  textMuted: '#A3ACBC',
-  border: '#2E3646',
-  primary: '#5B9BFF',
-  onPrimary: '#0F1218',
-  danger: '#FF6B6B',
-  onDanger: '#0F1218',
-  notice: '#3A2F0F',
-  onNotice: '#FFE29A',
+  background: '#0D1B21',
+  surface: '#15272E',
+  text: '#E3EEF1',
+  textMuted: '#9FB5B0',
+  border: '#2A434A',
+  primary: '#2BB5A8',
+  onPrimary: '#06201D',
+  danger: '#F97066',
+  onDanger: '#2A0A07',
+  dangerSurface: '#3A1A17',
+  notice: '#17302F',
+  onNotice: '#9FB5B0',
 };
 
-export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 } as const;
+export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 } as const;
 
-export const radius = { sm: 6, md: 10 } as const;
+export const radius = { sm: 8, md: 12, lg: 20, pill: 999 } as const;
+
+/** Readable width for forms and cards on tablets and in the browser. */
+export const maxContentWidth = 440;
 
 export const typography = {
+  brand: { fontSize: 32, fontWeight: '700', letterSpacing: -0.5 },
   title: { fontSize: 24, fontWeight: '700' },
   heading: { fontSize: 18, fontWeight: '600' },
-  body: { fontSize: 16 },
-  label: { fontSize: 14, fontWeight: '600' },
-  caption: { fontSize: 13 },
+  body: { fontSize: 16, lineHeight: 22 },
+  label: { fontSize: 15, fontWeight: '600' },
+  caption: { fontSize: 13, lineHeight: 18 },
 } as const;
 
 /** Colours for the device's current light/dark setting. */
@@ -63,6 +77,7 @@ export function useNavigationTheme(): Theme {
       card: colors.surface,
       text: colors.text,
       border: colors.border,
+      notification: colors.danger,
     },
   };
 }

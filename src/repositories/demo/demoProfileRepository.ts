@@ -1,6 +1,6 @@
 // DEMONSTRATION DATA — see demoDatabase.ts.
-import { AppError } from '@/models/errors';
-import type { FamilyProfile } from '@/models/FamilyProfile';
+import { AppError } from '../../models/errors';
+import type { FamilyProfile } from '../../models/FamilyProfile';
 import type { ProfileRepository } from '../profileRepository';
 import {
   copyProfile,

@@ -1,51 +1,40 @@
-import { createContext, use, useEffect, useState, type PropsWithChildren } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
-import type { Account } from '@/models/Account';
-import { authRepository } from '@/repositories/authRepository';
+import type { Account } from '../models/Account';
+import { authRepository } from '../repositories/authRepository';
 
-type SessionState =
-  | { status: 'loading'; account: null }
-  | { status: 'signedOut'; account: null }
-  | { status: 'signedIn'; account: Account };
+type SessionValue = {
+  account: Account | null;
+  isLoading: boolean;
+};
 
-const SessionContext = createContext<SessionState | null>(null);
+// 1. create the context (the "shared box")
+const SessionContext = createContext<SessionValue | null>(null);
 
-/**
- * Exposes the signed-in account to the whole app. Sign-in, registration and
- * sign-out are performed by ViewModels through `authRepository`; this
- * provider only follows the resulting session changes.
- */
-export function SessionProvider({ children }: PropsWithChildren) {
-  const [session, setSession] = useState<SessionState>({ status: 'loading', account: null });
+// 2. the provider follows the signed-in account and wraps the whole app (see app/_layout.tsx).
+//    Logging in and out is done by ViewModels through authRepository; this only listens.
+export function SessionProvider({ children }: { children: ReactNode }) {
+  const [account, setAccount] = useState<Account | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const apply = (account: Account | null) =>
-      setSession(account ? { status: 'signedIn', account } : { status: 'signedOut', account: null });
-
-    let active = true;
     authRepository
       .getCurrentAccount()
-      .then((account) => active && apply(account))
-      .catch(() => active && apply(null));
-    const unsubscribe = authRepository.onAccountChange(apply);
-    return () => {
-      active = false;
-      unsubscribe();
-    };
+      .then(setAccount)
+      .catch(() => setAccount(null))
+      .finally(() => setIsLoading(false));
+
+    // listen for log in / log out, and stop listening when the app closes
+    const unsubscribe = authRepository.onAccountChange(setAccount);
+    return unsubscribe;
   }, []);
 
-  return <SessionContext value={session}>{children}</SessionContext>;
+  return <SessionContext.Provider value={{ account, isLoading }}>{children}</SessionContext.Provider>;
 }
 
-export function useSession(): SessionState {
-  const value = use(SessionContext);
-  if (!value) throw new Error('useSession must be used inside <SessionProvider>.');
+// 3. a custom hook: any page calls useSession() to read the signed-in account
+export function useSession() {
+  const value = useContext(SessionContext);
+  if (!value) throw new Error('useSession() must be used inside <SessionProvider>');
   return value;
-}
-
-/** For screens behind the signed-in guard, where an account is guaranteed. */
-export function useSignedInAccount(): Account {
-  const session = useSession();
-  if (session.status !== 'signedIn') throw new Error('No signed-in account.');
-  return session.account;
 }

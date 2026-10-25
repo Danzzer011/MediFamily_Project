@@ -1,53 +1,51 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
-import { radius, spacing, typography, useThemeColors } from '@/theme';
+import { useThemeColors } from '../theme';
 
-interface ButtonProps {
+type ButtonProps = {
   title: string;
   onPress: () => void;
   variant?: 'primary' | 'secondary' | 'danger';
-  /** Shows a spinner and blocks presses while an action is running. */
-  loading?: boolean;
+  loading?: boolean; // shows a spinner and blocks taps while something is saving
   disabled?: boolean;
-}
+};
 
-export function Button({ title, onPress, variant = 'primary', loading = false, disabled = false }: ButtonProps) {
+// The app's button: teal for the main action, outlined for secondary, red for delete.
+export default function Button({ title, onPress, variant = 'primary', loading = false, disabled = false }: ButtonProps) {
   const colors = useThemeColors();
-  const inactive = disabled || loading;
-  const background =
-    variant === 'primary' ? colors.primary : variant === 'danger' ? colors.danger : 'transparent';
-  const foreground =
-    variant === 'primary' ? colors.onPrimary : variant === 'danger' ? colors.onDanger : colors.primary;
+
+  let backgroundColor = colors.primary;
+  let textColor = colors.onPrimary;
+  if (variant === 'secondary') {
+    backgroundColor = colors.surface;
+    textColor = colors.primary;
+  } else if (variant === 'danger') {
+    backgroundColor = colors.danger;
+    textColor = colors.onDanger;
+  }
+  const borderColor = variant === 'secondary' ? colors.primary : backgroundColor;
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ disabled: inactive, busy: loading }}
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
+      disabled={disabled || loading}
       onPress={onPress}
-      disabled={inactive}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: background, borderColor: variant === 'secondary' ? colors.primary : background },
-        (pressed || inactive) && styles.dimmed,
+        { backgroundColor, borderColor },
+        pressed && styles.pressed,
+        disabled && styles.disabled,
       ]}>
-      {loading ? (
-        <ActivityIndicator color={foreground} />
-      ) : (
-        <Text style={[styles.title, { color: foreground }]}>{title}</Text>
-      )}
+      {loading ? <ActivityIndicator color={textColor} /> : <Text style={[styles.text, { color: textColor }]}>{title}</Text>}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    minHeight: 48,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: typography.label,
-  dimmed: { opacity: 0.6 },
+  button: { minHeight: 52, paddingHorizontal: 24, borderRadius: 12, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  text: { fontSize: 16, fontWeight: '700' },
+  pressed: { opacity: 0.85 },
+  disabled: { opacity: 0.5 },
 });

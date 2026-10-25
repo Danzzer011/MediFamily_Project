@@ -7,21 +7,21 @@
  * built against realistic behaviour, but it is NOT persistent, shared between
  * devices or secure. Everything resets when the app reloads.
  */
-import type { Account } from '@/models/Account';
-import type { FamilyProfile } from '@/models/FamilyProfile';
-import type { ProfileInvitation } from '@/models/Sharing';
-import { AppError } from '@/models/errors';
+import type { Account } from '../../models/Account';
+import type { FamilyProfile } from '../../models/FamilyProfile';
+import type { ProfileInvitation } from '../../models/Sharing';
+import { AppError } from '../../models/errors';
 
-interface DemoAccount extends Account {
+type DemoAccount = Account & {
   /** Demo only: real passwords are handled by the auth provider, never stored by the app. */
   password: string;
-}
+};
 
-interface DemoMembership {
+type DemoMembership = {
   profileId: string;
   userId: string;
   joinedAt: string;
-}
+};
 
 const SEED_TIME = '2026-10-01T09:00:00.000Z';
 

@@ -1,31 +1,25 @@
-import { createContext, use, useState, type PropsWithChildren } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
-import type { ProfileSummary } from '@/models/FamilyProfile';
+import type { ProfileSummary } from '../models/FamilyProfile';
 import { useSession } from './SessionContext';
 
-interface SelectedProfileValue {
-  /** The profile chosen on the selection screen, or null if none is selected. */
+type SelectedProfileValue = {
   selectedProfile: ProfileSummary | null;
   selectProfile: (profile: ProfileSummary) => void;
   clearSelectedProfile: () => void;
-}
+};
 
+// 1. create the context
 const SelectedProfileContext = createContext<SelectedProfileValue | null>(null);
 
-/**
- * Remembers which profile the user is working on, as a navigation
- * convenience. It never replaces backend permission checks. The selection
- * belongs to the account that made it, so it disappears on sign-out or when
- * another account signs in.
- */
-export function SelectedProfileProvider({ children }: PropsWithChildren) {
+// 2. the provider remembers which profile the user is working on.
+//    This only helps navigation; the backend still checks who can see each profile.
+export function SelectedProfileProvider({ children }: { children: ReactNode }) {
   const { account } = useSession();
-  const [selection, setSelection] = useState<{ accountId: string; profile: ProfileSummary } | null>(
-    null,
-  );
+  const [selection, setSelection] = useState<{ accountId: string; profile: ProfileSummary } | null>(null);
 
-  const selectedProfile =
-    selection && account && selection.accountId === account.id ? selection.profile : null;
+  // a selection only counts for the account that made it, so it disappears on log out
+  const selectedProfile = selection && account && selection.accountId === account.id ? selection.profile : null;
 
   const value: SelectedProfileValue = {
     selectedProfile,
@@ -35,11 +29,12 @@ export function SelectedProfileProvider({ children }: PropsWithChildren) {
     clearSelectedProfile: () => setSelection(null),
   };
 
-  return <SelectedProfileContext value={value}>{children}</SelectedProfileContext>;
+  return <SelectedProfileContext.Provider value={value}>{children}</SelectedProfileContext.Provider>;
 }
 
-export function useSelectedProfile(): SelectedProfileValue {
-  const value = use(SelectedProfileContext);
-  if (!value) throw new Error('useSelectedProfile must be used inside <SelectedProfileProvider>.');
+// 3. a custom hook: any page calls useSelectedProfile() to read or change the selection
+export function useSelectedProfile() {
+  const value = useContext(SelectedProfileContext);
+  if (!value) throw new Error('useSelectedProfile() must be used inside <SelectedProfileProvider>');
   return value;
 }

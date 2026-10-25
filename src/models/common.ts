@@ -9,9 +9,9 @@ export type IsoTimestamp = string;
  * `version` starts at 1 and the backend increments it on every change;
  * edits and deletions must send the version that was loaded.
  */
-export interface RecordMeta {
+export type RecordMeta = {
   id: string;
   version: number;
   createdAt: IsoTimestamp;
   updatedAt: IsoTimestamp;
-}
+};

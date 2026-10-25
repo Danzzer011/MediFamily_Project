@@ -1,10 +1,11 @@
 import { Stack, ThemeProvider } from 'expo-router';
 
-import { SplashScreenController } from '@/components/SplashScreenController';
-import { SelectedProfileProvider } from '@/context/SelectedProfileContext';
-import { SessionProvider, useSession } from '@/context/SessionContext';
-import { useNavigationTheme } from '@/theme';
+import SplashScreenController from '../components/SplashScreenController';
+import { SelectedProfileProvider } from '../context/SelectedProfileContext';
+import { SessionProvider, useSession } from '../context/SessionContext';
+import { useNavigationTheme } from '../theme';
 
+// Root layout: the providers wrap every page so they all share the same session and selected profile.
 export default function RootLayout() {
   return (
     <ThemeProvider value={useNavigationTheme()}>
@@ -18,17 +19,18 @@ export default function RootLayout() {
   );
 }
 
+// Logged in -> the (app) pages. Logged out -> the (auth) pages (Login, Register).
+// This only steers navigation; the backend is what really protects the data.
 function RootNavigator() {
-  const { status } = useSession();
-  const signedIn = status === 'signedIn';
+  const { account } = useSession();
+  const loggedIn = account !== null;
 
-  // Client-side guards only steer navigation; the backend enforces access.
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={signedIn}>
+      <Stack.Protected guard={loggedIn}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>
-      <Stack.Protected guard={!signedIn}>
+      <Stack.Protected guard={!loggedIn}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
     </Stack>
