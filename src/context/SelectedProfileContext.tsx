@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 
 import type { ProfileSummary } from '../models/FamilyProfile';
 import { useSession } from './SessionContext';
@@ -21,13 +21,18 @@ export function SelectedProfileProvider({ children }: { children: ReactNode }) {
   // a selection only counts for the account that made it, so it disappears on log out
   const selectedProfile = selection && account && selection.accountId === account.id ? selection.profile : null;
 
-  const value: SelectedProfileValue = {
-    selectedProfile,
-    selectProfile: (profile) => {
-      if (account) setSelection({ accountId: account.id, profile });
+  // useCallback keeps these functions the same between renders, so pages can safely
+  // call them from inside a useEffect
+  const accountId = account?.id;
+  const selectProfile = useCallback(
+    (profile: ProfileSummary) => {
+      if (accountId) setSelection({ accountId, profile });
     },
-    clearSelectedProfile: () => setSelection(null),
-  };
+    [accountId],
+  );
+  const clearSelectedProfile = useCallback(() => setSelection(null), []);
+
+  const value: SelectedProfileValue = { selectedProfile, selectProfile, clearSelectedProfile };
 
   return <SelectedProfileContext.Provider value={value}>{children}</SelectedProfileContext.Provider>;
 }
