@@ -1,5 +1,6 @@
 // DEMONSTRATION DATA — see demoDatabase.ts.
 import { AppError } from '../../models/errors';
+import { validateEmail, validateNewPassword } from '../../models/validation';
 import type { AuthRepository } from '../authRepository';
 import {
   demoRequest,
@@ -32,6 +33,11 @@ export const demoAuthRepository: AuthRepository = {
   async register(email, password) {
     await demoRequest('write');
     const normalised = normaliseEmail(email);
+    // the backend checks the rules again, even though the form already did
+    const emailProblem = validateEmail(normalised);
+    if (emailProblem) throw new AppError('validation', emailProblem);
+    const passwordProblem = validateNewPassword(password);
+    if (passwordProblem) throw new AppError('validation', passwordProblem);
     if (demoTables.accounts.some((a) => a.email === normalised)) {
       throw new AppError('auth', 'An account with this email already exists.');
     }
