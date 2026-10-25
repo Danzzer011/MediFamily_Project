@@ -8,6 +8,7 @@ import type { ProfileInvitation, ProfileMember } from '../../models/Sharing';
 import { validateEmail } from '../../models/validation';
 import { sharingRepository } from '../../repositories/sharingRepository';
 import { profileRepository } from '../../repositories/profileRepository';
+import { clearProfileReminders } from '../../services/medicationReminders';
 import { useReloadOnFocus } from '../shared/useReloadOnFocus';
 
 // The action waiting for the user to confirm in the dialog.
@@ -136,6 +137,7 @@ export function useSharingViewModel(profileId: string) {
         await sharingRepository.revokeMember(profileId, pendingAction.member.userId);
       } else {
         await sharingRepository.leaveProfile(profileId);
+        if (account) clearProfileReminders(account.id, profileId).catch(() => undefined);
         clearSelectedProfile();
       }
       const result = pendingAction.type === 'leave' ? 'left' : 'done';
