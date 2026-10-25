@@ -1,23 +1,38 @@
 // DEMONSTRATION DATA — see demoDatabase.ts.
 import { AppError } from '../../models/errors';
-import type { MedicalDocument } from '../../models/MedicalDocument';
+import { isPdf, type MedicalDocument } from '../../models/MedicalDocument';
 import type { DocumentRepository } from '../documentRepository';
-import { demoRequest, findAccessibleProfile, newDemoId, nowIso, removeWhere, requireDemoAccount } from './demoDatabase';
+import { demoRequest, demoTables, findAccessibleProfile, newDemoId, nowIso, removeWhere, requireDemoAccount } from './demoDatabase';
 
 const SEED_TIME = '2026-10-01T09:00:00.000Z';
 
-// Made-up documents for the demo profile. No real file is stored, only a name and a type.
-function demo(n: number, title: string, category: MedicalDocument['category'], relevantDate: string, fileName: string, fileType: MedicalDocument['fileType']): MedicalDocument {
-  return { id: `demo-document-${n}`, version: 1, createdAt: SEED_TIME, updatedAt: SEED_TIME, profileId: 'demo-profile-father', title, category, relevantDate, fileName, fileType };
+// The same list the prescriptions use for their attachments, so both screens see every document.
+const documents = demoTables.documents;
+
+// Made-up documents for the demo profile. These file addresses are not real, so they show no preview.
+function demo(n: number, title: string, category: MedicalDocument['category'], relevantDate: string, originalFileName: string, mimeType: string): MedicalDocument {
+  return {
+    id: `demo-document-${n}`,
+    version: 1,
+    createdAt: SEED_TIME,
+    updatedAt: SEED_TIME,
+    profileId: 'demo-profile-father',
+    title,
+    category,
+    relevantDate,
+    storagePath: `demo-files/${originalFileName}`,
+    originalFileName,
+    mimeType,
+  };
 }
 
-const documents: MedicalDocument[] = [
-  demo(1, 'Prescription: Concor 5 mg, Glucophage 500 mg', 'prescription', '2026-10-12', 'IMG_2041.jpg', 'image'),
-  demo(2, 'Blood test results: HbA1c and lipids', 'lab report', '2026-09-28', 'blood-test-sep-2026.pdf', 'pdf'),
-  demo(3, 'Chest X-ray', 'scan', '2026-08-15', 'chest-xray.jpg', 'image'),
-  demo(4, 'Discharge report, Al Salam International Hospital, Maadi', 'other', '2026-03-03', 'discharge-report.pdf', 'pdf'),
-  demo(5, 'Eye pressure results', 'lab report', '2026-01-19', 'eye-pressure-jan.pdf', 'pdf'),
-];
+documents.push(
+  demo(1, 'Prescription: Concor 5 mg, Glucophage 500 mg', 'prescription', '2026-10-12', 'IMG_2041.jpg', 'image/jpeg'),
+  demo(2, 'Blood test results: HbA1c and lipids', 'lab_report', '2026-09-28', 'blood-test-sep-2026.pdf', 'application/pdf'),
+  demo(3, 'Chest X-ray', 'scan', '2026-08-15', 'chest-xray.jpg', 'image/jpeg'),
+  demo(4, 'Discharge report, Al Salam International Hospital, Maadi', 'other', '2026-03-03', 'discharge-report.pdf', 'application/pdf'),
+  demo(5, 'Eye pressure results', 'lab_report', '2026-01-19', 'eye-pressure-jan.pdf', 'application/pdf'),
+);
 
 // Checks the caller may use the profile, like row-level security would.
 function checkAccess(profileId: string) {
@@ -44,8 +59,21 @@ export const demoDocumentRepository: DocumentRepository = {
   async create(profileId, details, file) {
     await demoRequest('write');
     checkAccess(profileId);
+    if (!isPdf(file) && !file.mimeType.startsWith('image/')) {
+      throw new AppError('validation', 'Attach a photo or a PDF.');
+    }
     const time = nowIso();
-    const created: MedicalDocument = { ...details, ...file, id: newDemoId('document'), version: 1, createdAt: time, updatedAt: time, profileId };
+    const created: MedicalDocument = {
+      ...details,
+      id: newDemoId('document'),
+      version: 1,
+      createdAt: time,
+      updatedAt: time,
+      profileId,
+      storagePath: file.uri, // demo only: Phase 2 uploads the file to private storage
+      originalFileName: file.fileName,
+      mimeType: file.mimeType,
+    };
     documents.push(created);
     return { ...created };
   },
@@ -63,5 +91,9 @@ export const demoDocumentRepository: DocumentRepository = {
     checkAccess(profileId);
     findOwn(profileId, id);
     removeWhere(documents, (d) => d.id === id);
+    // a prescription keeps its written details, it only loses the link to this document
+    for (const prescription of demoTables.prescriptions) {
+      if (prescription.attachmentDocumentId === id) prescription.attachmentDocumentId = null;
+    }
   },
 };

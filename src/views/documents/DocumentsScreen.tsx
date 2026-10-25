@@ -2,6 +2,7 @@ import { router, Stack } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import AttachmentPreview from '../../components/AttachmentPreview';
 import Button from '../../components/Button';
 import ChoiceChip from '../../components/ChoiceChip';
 import ConfirmDialog from '../../components/ConfirmDialog';
@@ -22,8 +23,8 @@ import LinkAction from '../../components/LinkAction';
 import LoadingView from '../../components/LoadingView';
 import { datePartsIso } from '../../models/dateTime';
 import { formatIsoDate } from '../../models/dates';
-import { DOCUMENT_CATEGORIES, type MedicalDocument } from '../../models/MedicalDocument';
-import { capitalize } from '../../models/text';
+import { DOCUMENT_CATEGORIES, isPdf, type MedicalDocument } from '../../models/MedicalDocument';
+import { labelFor } from '../../models/text';
 import { useThemeColors } from '../../theme';
 import { monoFont } from '../../theme/medifamily-theme';
 import { useDocumentsViewModel } from '../../viewmodels/documents/useDocumentsViewModel';
@@ -43,7 +44,7 @@ export default function DocumentsScreen({ profileId }: { profileId: string }) {
     <ConfirmDialog
       visible={vm.pendingDelete !== null}
       title="Delete this document?"
-      message={`“${vm.pendingDelete?.title ?? ''}” (${vm.pendingDelete?.fileName ?? ''}) will be deleted for ${profile.name}. This cannot be undone.`}
+      message={`“${vm.pendingDelete?.title ?? ''}” (${vm.pendingDelete?.originalFileName ?? ''}) will be deleted for ${profile.name}. This cannot be undone.`}
       confirmTitle="Delete"
       destructive
       loading={vm.deleting}
@@ -71,19 +72,22 @@ export default function DocumentsScreen({ profileId }: { profileId: string }) {
             {adding ? (
               <>
                 <View style={styles.options}>
-                  <OptionButton icon="camera" label="Take photo" onPress={vm.takePhoto} />
-                  <OptionButton icon="upload" label="Choose file" onPress={vm.chooseFile} />
+                  <OptionButton icon="camera" label="Take photo" onPress={() => vm.pickFile('camera')} />
+                  <OptionButton icon="upload" label="Choose file" onPress={vm.toggleChoosingKind} />
                 </View>
-                {vm.file ? <FileLine name={vm.file.fileName} type={vm.file.fileType} onChange={vm.clearFile} /> : null}
+                {vm.choosingKind ? (
+                  <View style={styles.options}>
+                    <OptionButton icon="image" label="Image" onPress={() => vm.pickFile('image')} />
+                    <OptionButton icon="pdf" label="PDF" onPress={() => vm.pickFile('pdf')} />
+                  </View>
+                ) : null}
+                {vm.file ? <FileLine name={vm.file.fileName} type={fileTypeOf(vm.file)} onChange={vm.clearFile} /> : null}
                 {vm.errors.file ? <Text style={[styles.error, { color: colors.danger }]}>{vm.errors.file}</Text> : null}
                 <Text style={[styles.hint, { color: colors.textMuted }]}>A photo, an image or a PDF.</Text>
-                <Text style={[styles.hint, { color: colors.textMuted }]}>
-                  Phase 1 demo: these buttons attach a sample file. The real camera and file picker come in Phase 2.
-                </Text>
               </>
             ) : doc ? (
               <>
-                <FileLine name={doc.fileName} type={doc.fileType} />
+                <FileLine name={doc.originalFileName} type={fileTypeOf(doc)} />
                 <Text style={[styles.hint, { color: colors.textMuted }]}>The file cannot be changed. Only the details below.</Text>
               </>
             ) : null}
@@ -98,7 +102,7 @@ export default function DocumentsScreen({ profileId }: { profileId: string }) {
             </View>
             <View accessibilityRole="radiogroup" style={styles.chips}>
               {DOCUMENT_CATEGORIES.map((c) => (
-                <ChoiceChip key={c} label={capitalize(c)} selected={vm.category === c} onPress={() => vm.setCategory(c)} />
+                <ChoiceChip key={c} label={labelFor(c)} selected={vm.category === c} onPress={() => vm.setCategory(c)} />
               ))}
             </View>
             {vm.errors.category ? <Text style={[styles.error, { color: colors.danger }]}>{vm.errors.category}</Text> : null}
@@ -140,26 +144,30 @@ export default function DocumentsScreen({ profileId }: { profileId: string }) {
         />
         <PageTitle text={d.title} />
         <View style={styles.previewWrap}>
-          <View style={[styles.preview, { borderColor: colors.border, backgroundColor: colors.notice }]}>
-            <Icon name={d.fileType} size={44} color={colors.textMuted} />
-            <Text style={[styles.previewText, { color: colors.textMuted }]}>
-              {d.fileType === 'pdf' ? 'PDF document. No preview in Phase 1.' : 'Photo preview'}
-            </Text>
-          </View>
+          {hasRealFile(d) ? (
+            <AttachmentPreview file={{ uri: d.storagePath, fileName: d.originalFileName, mimeType: d.mimeType }} />
+          ) : (
+            <View style={[styles.preview, { borderColor: colors.border, backgroundColor: colors.notice }]}>
+              <Icon name={fileTypeOf(d)} size={44} color={colors.textMuted} />
+              <Text style={[styles.previewText, { color: colors.textMuted }]}>
+                {isPdf(d) ? 'PDF document. No preview for this sample.' : 'Photo preview'}
+              </Text>
+            </View>
+          )}
         </View>
         <View style={styles.detailsGap}>
           <LedgerList>
             <Detail label="Category">
-              <Pill label={capitalize(d.category)} color={colors.textMuted} borderColor={colors.textMuted} />
+              <Pill label={labelFor(d.category)} color={colors.textMuted} borderColor={colors.textMuted} />
             </Detail>
             <Detail label="Relevant date">
               <Text style={[styles.value, { color: colors.text, fontFamily: monoFont }]}>{formatIsoDate(d.relevantDate)}</Text>
             </Detail>
             <Detail label="File name">
-              <Text style={[styles.value, { color: colors.text }]}>{d.fileName}</Text>
+              <Text style={[styles.value, { color: colors.text }]}>{d.originalFileName}</Text>
             </Detail>
             <Detail label="File type">
-              <FileType type={d.fileType} />
+              <FileType type={fileTypeOf(d)} />
             </Detail>
           </LedgerList>
         </View>
@@ -219,14 +227,24 @@ function DocumentRow({ doc, onOpen }: { doc: MedicalDocument; onOpen: () => void
       <View style={styles.rowBody}>
         <Text style={[styles.rowTitle, { color: colors.text }]}>{doc.title}</Text>
         <View style={styles.chipsRow}>
-          <Pill label={capitalize(doc.category)} color={colors.textMuted} borderColor={colors.textMuted} />
-          <FileType type={doc.fileType} small />
+          <Pill label={labelFor(doc.category)} color={colors.textMuted} borderColor={colors.textMuted} />
+          <FileType type={fileTypeOf(doc)} small />
         </View>
-        <Text style={[styles.small, { color: colors.textMuted }]}>{doc.fileName}</Text>
+        <Text style={[styles.small, { color: colors.textMuted }]}>{doc.originalFileName}</Text>
       </View>
       <Icon name="next" size={18} color={colors.textMuted} />
     </Pressable>
   );
+}
+
+// Image or PDF, read from the file's mime type.
+function fileTypeOf(file: { mimeType: string }): 'image' | 'pdf' {
+  return isPdf(file) ? 'pdf' : 'image';
+}
+
+// Files picked on this device have a real address. The demo documents do not, so they show no preview.
+function hasRealFile(doc: MedicalDocument): boolean {
+  return /^(file|content|blob|data|https?):/.test(doc.storagePath);
 }
 
 // An image or PDF icon with its label.
