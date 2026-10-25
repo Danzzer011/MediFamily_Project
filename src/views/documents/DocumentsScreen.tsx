@@ -1,4 +1,5 @@
 import { router, Stack } from 'expo-router';
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import Button from '../../components/Button';
@@ -22,6 +23,7 @@ import LoadingView from '../../components/LoadingView';
 import { datePartsIso } from '../../models/dateTime';
 import { formatIsoDate } from '../../models/dates';
 import { DOCUMENT_CATEGORIES, type MedicalDocument } from '../../models/MedicalDocument';
+import { capitalize } from '../../models/text';
 import { useThemeColors } from '../../theme';
 import { monoFont } from '../../theme/medifamily-theme';
 import { useDocumentsViewModel } from '../../viewmodels/documents/useDocumentsViewModel';
@@ -167,7 +169,7 @@ export default function DocumentsScreen({ profileId }: { profileId: string }) {
             <Button title="Delete document" variant="danger" onPress={() => vm.askToDelete(d)} />
           </View>
         </View>
-        <View style={styles.noticeWrap}>
+        <View style={styles.demoNotice}>
           <DemoDataNotice />
         </View>
         {deleteDialog}
@@ -199,7 +201,7 @@ export default function DocumentsScreen({ profileId }: { profileId: string }) {
           <Button title="Add the first document" onPress={vm.startAdding} />
         </View>
       )}
-      <View style={styles.noticeWrap}>
+      <View style={styles.demoNotice}>
         <DemoDataNotice />
       </View>
     </LedgerScreen>
@@ -268,7 +270,7 @@ function OptionButton({ icon, label, onPress }: { icon: IconName; label: string;
   );
 }
 
-function Detail({ label, children }: { label: string; children: React.ReactNode }) {
+function Detail({ label, children }: { label: string; children: ReactNode }) {
   const colors = useThemeColors();
   return (
     <View style={styles.detail}>
@@ -276,10 +278,6 @@ function Detail({ label, children }: { label: string; children: React.ReactNode 
       <View style={styles.detailValue}>{children}</View>
     </View>
   );
-}
-
-function capitalize(text: string) {
-  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 const styles = StyleSheet.create({
@@ -293,7 +291,7 @@ const styles = StyleSheet.create({
   value: { fontSize: 16, lineHeight: 22 },
   dock: { marginTop: 20, paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1 },
   deleteGap: { marginTop: 16 },
-  noticeWrap: { paddingHorizontal: 16, paddingTop: 20 },
+  demoNotice: { paddingHorizontal: 16, paddingTop: 20 },
   empty: { paddingHorizontal: 16, paddingTop: 24, gap: 8 },
   emptyTitle: { fontSize: 24, lineHeight: 30, fontWeight: '700' },
   emptyText: { fontSize: 16, lineHeight: 22, marginBottom: 10 },

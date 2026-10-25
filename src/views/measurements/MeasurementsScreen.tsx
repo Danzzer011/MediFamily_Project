@@ -19,6 +19,7 @@ import LoadingView from '../../components/LoadingView';
 import { dayParts, splitTimestamp } from '../../models/dateTime';
 import { formatIsoDate } from '../../models/dates';
 import { formatReading, MEASUREMENT_TYPES, UNITS_BY_TYPE, type Measurement } from '../../models/Measurement';
+import { capitalize } from '../../models/text';
 import { useThemeColors } from '../../theme';
 import { useMeasurementsViewModel } from '../../viewmodels/measurements/useMeasurementsViewModel';
 
@@ -37,6 +38,7 @@ export default function MeasurementsScreen({ profileId }: { profileId: string })
   // ---- add / edit form ----
   if (vm.editing) {
     const isPressure = vm.type === 'blood pressure';
+    const { existing } = vm;
     const pending = vm.pendingDelete;
     const when = pending ? splitTimestamp(pending.measuredAt, vm.zone) : null;
     return (
@@ -109,9 +111,9 @@ export default function MeasurementsScreen({ profileId }: { profileId: string })
 
         <View style={[styles.dock, { borderColor: colors.border }]}>
           <Button title={vm.isNew ? 'Save measurement' : 'Save changes'} loading={vm.saving} onPress={vm.save} />
-          {typeof vm.editing === 'object' ? (
+          {existing ? (
             <View style={styles.deleteGap}>
-              <Button title="Delete measurement" variant="danger" disabled={vm.saving} onPress={() => vm.askToDelete(vm.editing as Measurement)} />
+              <Button title="Delete measurement" variant="danger" disabled={vm.saving} onPress={() => vm.askToDelete(existing)} />
             </View>
           ) : null}
         </View>
@@ -165,7 +167,7 @@ export default function MeasurementsScreen({ profileId }: { profileId: string })
           <Button title="Add the first measurement" onPress={vm.startAdding} />
         </View>
       )}
-      <View style={styles.noticeWrap}>
+      <View style={styles.demoNotice}>
         <DemoDataNotice />
       </View>
     </LedgerScreen>
@@ -192,10 +194,6 @@ function ReadingRow({ measurement: m, zone, onOpen }: { measurement: Measurement
   );
 }
 
-function capitalize(text: string) {
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
 const styles = StyleSheet.create({
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingBottom: 4 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 },
@@ -206,7 +204,7 @@ const styles = StyleSheet.create({
   noneText: { paddingHorizontal: 16, paddingTop: 8, fontSize: 16, lineHeight: 22 },
   dock: { marginTop: 20, paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1 },
   deleteGap: { marginTop: 16 },
-  noticeWrap: { paddingHorizontal: 16, paddingTop: 20 },
+  demoNotice: { paddingHorizontal: 16, paddingTop: 20 },
   empty: { paddingHorizontal: 16, paddingTop: 24, gap: 8 },
   emptyTitle: { fontSize: 24, lineHeight: 30, fontWeight: '700' },
   emptyText: { fontSize: 16, lineHeight: 22, marginBottom: 10 },

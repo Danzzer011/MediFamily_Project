@@ -1,7 +1,9 @@
 import type { IsoDate, IsoTimestamp } from './common';
-import { formatIsoDate, isValidIsoDate } from './dates';
+import { isValidIsoDate } from './dates';
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 // Date as YYYY-MM-DD and time as HH:MM (24-hour). Returns a message, or null when both are fine.
 export function validateDateTime(date: string, time: string): { date: string | null; time: string | null } {
@@ -49,15 +51,6 @@ export function splitTimestamp(timestamp: IsoTimestamp, timeZone: string): { dat
   const two = (n: number) => String(n).padStart(2, '0');
   return { date: `${w.year}-${two(w.month)}-${two(w.day)}`, time: `${two(w.hour)}:${two(w.minute)}` };
 }
-
-// "3 Nov 2026, 14:30" in the profile's time zone.
-export function formatTimestamp(timestamp: IsoTimestamp, timeZone: string): string {
-  const { date, time } = splitTimestamp(timestamp, timeZone);
-  return `${formatIsoDate(date)}, ${time}`;
-}
-
-const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 // The pieces a list row shows ("05", "NOV", "THU", "18:30"), read in the profile's time zone.
 export function dayParts(timestamp: IsoTimestamp, timeZone: string) {

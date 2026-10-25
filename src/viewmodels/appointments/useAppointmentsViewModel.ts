@@ -65,7 +65,7 @@ export function useAppointmentsViewModel(profileId: string) {
     };
   }, [profileId, reloadKey]);
 
-  // times are entered and shown in the profile's time zone, so every caregiver sees the same schedule
+  // times are read and shown in the profile's time zone
   const zone = profile?.timeZone ?? 'UTC';
 
   // "Coming up" (soonest first) and "Earlier" (newest first). A passed date never changes a status by itself.
@@ -74,6 +74,7 @@ export function useAppointmentsViewModel(profileId: string) {
   const earlier = appointments.filter((a) => a.startsAt < nowIso).reverse();
   const next = upcoming.find((a) => a.status === 'scheduled') ?? null;
   const daysToNext = next ? daysUntil(next.startsAt, zone) : 0;
+  const existing = editing !== null && editing !== 'new' ? editing : null; // the appointment being edited
 
   function startAdding() {
     setEditing('new');
@@ -180,6 +181,7 @@ export function useAppointmentsViewModel(profileId: string) {
     setRemindersOn,
     exportMessage,
     editing,
+    existing,
     isNew: editing === 'new',
     doctor,
     date,

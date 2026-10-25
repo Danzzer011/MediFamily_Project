@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { datePartsIso, dayParts, daysUntil, formatTimestamp, splitTimestamp, toTimestamp, validateDateTime, zoneLabel } from './dateTime';
+import { datePartsIso, dayParts, daysUntil, splitTimestamp, toTimestamp, validateDateTime, zoneLabel } from './dateTime';
 
 describe('validateDateTime', () => {
   it('accepts a real date and a 24-hour time', () => {
@@ -67,9 +67,5 @@ describe('time zones', () => {
         expect(splitTimestamp(toTimestamp(date, time, zone), zone)).toEqual({ date, time });
       }
     }
-  });
-
-  it('formats for display', () => {
-    expect(formatTimestamp('2026-11-03T12:30:00.000Z', 'Africa/Cairo')).toBe('3 Nov 2026, 14:30');
   });
 });

@@ -48,7 +48,7 @@ export default function LedgerField({ label, tag, error, hint, mono = false, mul
           multiline && styles.multiline,
         ]}
       />
-      {error ? <Text style={[styles.message, { color: colors.danger, fontWeight: '600' }]}>{error}</Text> : null}
+      {error ? <Text style={[styles.message, styles.error, { color: colors.danger }]}>{error}</Text> : null}
       {!error && hint ? <Text style={[styles.message, { color: colors.textMuted }]}>{hint}</Text> : null}
     </View>
   );
@@ -62,4 +62,5 @@ const styles = StyleSheet.create({
   input: { minHeight: 52, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, fontSize: 16 },
   multiline: { minHeight: 92, textAlignVertical: 'top' },
   message: { fontSize: 13, lineHeight: 18 },
+  error: { fontWeight: '600' },
 });
