@@ -46,6 +46,7 @@ const SHAPES = {
     </>
   ),
   next: <Path d="M9 18l6-6-6-6" />,
+  back: <Path d="M15 18l-6-6 6-6" />,
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof SHAPES;

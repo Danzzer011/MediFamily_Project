@@ -12,6 +12,7 @@ import Icon from '../../components/ledger/Icon';
 import LedgerField from '../../components/ledger/LedgerField';
 import LedgerList from '../../components/ledger/LedgerList';
 import LedgerScreen from '../../components/ledger/LedgerScreen';
+import PageTitle from '../../components/ledger/PageTitle';
 import Pill from '../../components/ledger/Pill';
 import SectionLabel from '../../components/ledger/SectionLabel';
 import Segmented from '../../components/ledger/Segmented';
@@ -48,7 +49,7 @@ export default function AppointmentsScreen({ profileId }: { profileId: string })
         <Stack.Screen
           options={{ title: profile.name, headerBackVisible: false, headerLeft: () => <HeaderCancel onPress={vm.cancelEditing} />, headerRight: () => zoneText }}
         />
-        <Title text={vm.isNew ? 'New appointment' : 'Edit appointment'} />
+        <PageTitle text={vm.isNew ? 'New appointment' : 'Edit appointment'} />
         {vm.formError ? <ErrorBanner message={vm.formError} /> : null}
         <View style={styles.form}>
           <LedgerField label="Doctor name" tag="Required" value={vm.doctor} onChangeText={vm.setDoctor} error={vm.errors.doctor} autoCapitalize="words" />
@@ -120,7 +121,7 @@ export default function AppointmentsScreen({ profileId }: { profileId: string })
   return (
     <LedgerScreen>
       <Stack.Screen options={{ title: profile.name, headerBackVisible: true, headerLeft: undefined, headerRight: () => zoneText }} />
-      <Title text="Appointments" />
+      <PageTitle text="Appointments" />
 
       {vm.next && nextParts ? (
         <View style={[styles.next, { borderColor: colors.text, backgroundColor: colors.surface }]}>
@@ -232,22 +233,12 @@ function AppointmentRow({ appointment: a, zone, onOpen, onExport }: { appointmen
   );
 }
 
-function Title({ text }: { text: string }) {
-  const colors = useThemeColors();
-  return (
-    <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>
-      {text}
-    </Text>
-  );
-}
-
 function capitalize(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 const styles = StyleSheet.create({
   zone: { fontSize: 13 },
-  title: { fontSize: 24, lineHeight: 30, fontWeight: '700', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 10 },
   next: { marginHorizontal: 16, marginBottom: 12, borderWidth: 1.5, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10 },
   nextLabel: { fontSize: 13, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
   nextName: { fontSize: 18, lineHeight: 24, fontWeight: '700', marginVertical: 2 },
