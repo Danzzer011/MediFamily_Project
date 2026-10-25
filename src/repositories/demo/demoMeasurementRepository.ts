@@ -6,10 +6,17 @@ import { demoRequest, findAccessibleProfile, newDemoId, nowIso, removeWhere, req
 
 const SEED_TIME = '2026-10-01T09:00:00.000Z';
 
+// Made-up readings for the demo profile (Cairo time is UTC+3 until 29 Oct 2026).
+function demo(n: number, measuredAt: string, type: Measurement['type'], value: number, diastolic: number | null, unit: Measurement['unit']): Measurement {
+  return { id: `demo-measurement-${n}`, version: 1, createdAt: SEED_TIME, updatedAt: SEED_TIME, profileId: 'demo-profile-father', type, measuredAt, value, diastolic, unit };
+}
+
 const measurements: Measurement[] = [
-  { id: 'demo-measurement-1', version: 1, createdAt: SEED_TIME, updatedAt: SEED_TIME, profileId: 'demo-profile-father', type: 'blood pressure', measuredAt: '2026-10-20T07:30:00.000Z', value: 128, diastolic: 82, unit: 'mmHg' },
-  { id: 'demo-measurement-2', version: 1, createdAt: SEED_TIME, updatedAt: SEED_TIME, profileId: 'demo-profile-father', type: 'blood glucose', measuredAt: '2026-10-19T06:45:00.000Z', value: 105, diastolic: null, unit: 'mg/dL' },
-  { id: 'demo-measurement-3', version: 1, createdAt: SEED_TIME, updatedAt: SEED_TIME, profileId: 'demo-profile-father', type: 'weight', measuredAt: '2026-10-18T08:00:00.000Z', value: 78.5, diastolic: null, unit: 'kg' },
+  demo(1, '2026-10-25T04:30:00.000Z', 'blood pressure', 130, 85, 'mmHg'),
+  demo(2, '2026-10-24T18:10:00.000Z', 'blood glucose', 142, null, 'mg/dL'),
+  demo(3, '2026-10-24T04:30:00.000Z', 'blood pressure', 128, 82, 'mmHg'),
+  demo(4, '2026-10-23T04:05:00.000Z', 'weight', 82.4, null, 'kg'),
+  demo(5, '2026-10-22T03:50:00.000Z', 'blood glucose', 6.1, null, 'mmol/L'),
 ];
 
 // Checks the caller may use the profile, like row-level security would.

@@ -114,8 +114,8 @@ export function useMeasurementsViewModel(profileId: string) {
     const second = parsePositive(diastolic);
     const dateTime = validateDateTime(date, time);
     const next: FormErrors = {
-      value: first === null ? (isPressure ? 'Enter the systolic number, e.g. 120.' : 'Enter a number above zero.') : '',
-      diastolic: isPressure && second === null ? 'Enter the diastolic number, e.g. 80.' : '',
+      value: first === null ? (isPressure ? 'Enter the top number, like 130.' : 'Enter a number above zero.') : '',
+      diastolic: isPressure && second === null ? 'Enter the bottom number, like 85.' : '',
       date: dateTime.date ?? '',
       time: dateTime.time ?? '',
     };
@@ -159,6 +159,7 @@ export function useMeasurementsViewModel(profileId: string) {
     try {
       await measurementRepository.remove(profileId, pendingDelete.id);
       setPendingDelete(null);
+      setEditing(null); // the edit form belonged to the deleted reading
       reload();
     } catch (error) {
       setDeleteError(toAppError(error).message);
@@ -169,8 +170,10 @@ export function useMeasurementsViewModel(profileId: string) {
   return {
     profile,
     visible,
+    total: measurements.length,
     loading,
     loadError,
+    zone,
     filter,
     setFilter,
     editing,
