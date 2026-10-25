@@ -1,5 +1,5 @@
 import { router, Stack } from 'expo-router';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Switch, Text, View } from 'react-native';
 
 import Button from '../../components/Button';
 import ChoiceChip from '../../components/ChoiceChip';
@@ -7,7 +7,9 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import DemoDataNotice from '../../components/DemoDataNotice';
 import ErrorBanner from '../../components/ErrorBanner';
 import ErrorView from '../../components/ErrorView';
+import LinkAction from '../../components/LinkAction';
 import LoadingView from '../../components/LoadingView';
+import ProfileName from '../../components/ProfileName';
 import Screen from '../../components/Screen';
 import TextField from '../../components/TextField';
 import { APPOINTMENT_STATUSES } from '../../models/Appointment';
@@ -145,27 +147,7 @@ function capitalize(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-// Shows whose appointments these are (all data belongs to the selected profile).
-function ProfileName({ name }: { name: string }) {
-  const colors = useThemeColors();
-  return (
-    <Text accessibilityRole="header" style={[styles.profileName, { color: colors.text }]}>
-      Profile: {name}
-    </Text>
-  );
-}
-
-function LinkAction({ label, accessibilityLabel, onPress, danger = false }: { label: string; accessibilityLabel: string; onPress: () => void; danger?: boolean }) {
-  const colors = useThemeColors();
-  return (
-    <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} onPress={onPress} style={styles.link}>
-      <Text style={[styles.linkText, { color: danger ? colors.danger : colors.primary }]}>{label}</Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  profileName: { fontSize: 18, fontWeight: '700' },
   card: { borderWidth: 1, borderRadius: 20, padding: 20, gap: 12 },
   sectionTitle: { fontSize: 17, fontWeight: '700' },
   body: { fontSize: 16, lineHeight: 22 },
@@ -178,6 +160,4 @@ const styles = StyleSheet.create({
   rowTop: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   badge: { fontSize: 13, fontWeight: '700', borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2 },
   actions: { flexDirection: 'row', gap: 16 },
-  link: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 },
-  linkText: { fontSize: 15, fontWeight: '700' },
 });

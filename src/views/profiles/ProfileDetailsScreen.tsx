@@ -54,6 +54,7 @@ export default function ProfileDetailsScreen({ profileId }: { profileId: string 
           href={`/profiles/${profile.id}/sharing`}
         />
         <MenuItem title="Appointments" description="Doctor visits and reminders" href={`/profiles/${profile.id}/appointments`} />
+        <MenuItem title="Medical documents" description="Prescriptions, lab reports and scans" href={`/profiles/${profile.id}/documents`} />
         {/* Medications, prescriptions, appointments, documents and measurements (Mazen's and Mohab's screens) link from here. */}
       </View>
 
