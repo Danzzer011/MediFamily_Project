@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { dayParts, daysUntil, formatTimestamp, splitTimestamp, toTimestamp, validateDateTime, zoneLabel } from './dateTime';
+import { datePartsIso, dayParts, daysUntil, formatTimestamp, splitTimestamp, toTimestamp, validateDateTime, zoneLabel } from './dateTime';
 
 describe('validateDateTime', () => {
   it('accepts a real date and a 24-hour time', () => {
@@ -33,6 +33,10 @@ describe('list helpers', () => {
     expect(daysUntil('2026-11-05T16:30:00.000Z', 'Africa/Cairo', now)).toBe(0);
     expect(daysUntil('2026-11-09T09:00:00.000Z', 'Africa/Cairo', now)).toBe(4);
     expect(daysUntil('2026-11-03T09:00:00.000Z', 'Africa/Cairo', now)).toBe(-2);
+  });
+
+  it('splits a plain date for a list row', () => {
+    expect(datePartsIso('2026-10-12')).toEqual({ day: '12', month: 'OCT', year: '2026' });
   });
 
   it('names the zone for the header', () => {

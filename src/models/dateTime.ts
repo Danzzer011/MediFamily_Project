@@ -1,4 +1,4 @@
-import type { IsoTimestamp } from './common';
+import type { IsoDate, IsoTimestamp } from './common';
 import { formatIsoDate, isValidIsoDate } from './dates';
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -79,4 +79,10 @@ export function daysUntil(timestamp: IsoTimestamp, timeZone: string, now: Date =
 // "Africa/Cairo" -> "Cairo time"
 export function zoneLabel(timeZone: string): string {
   return `${(timeZone.split('/').pop() ?? timeZone).replace(/_/g, ' ')} time`;
+}
+
+// "2026-10-12" -> { day: '12', month: 'OCT', year: '2026' } for a list row (a date without a time).
+export function datePartsIso(date: IsoDate) {
+  const [year, month, day] = date.split('-').map(Number);
+  return { day: String(day).padStart(2, '0'), month: MONTHS[month - 1], year: String(year) };
 }

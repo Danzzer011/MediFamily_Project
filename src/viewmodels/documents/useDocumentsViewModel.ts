@@ -88,6 +88,15 @@ export function useDocumentsViewModel(profileId: string) {
     setMode('list');
   }
 
+  // Cancel in a form: editing goes back to the document, adding goes back to the list.
+  function cancelForm() {
+    setMode(mode === 'edit' && selected ? 'view' : 'list');
+  }
+
+  function clearFile() {
+    setFile(null);
+  }
+
   // Phase 1: buttons only. Real camera and file picking come in Phase 2, so we attach a labelled demo file.
   function takePhoto() {
     setFile({ fileName: 'photo-demo.jpg', fileType: 'image' });
@@ -173,6 +182,8 @@ export function useDocumentsViewModel(profileId: string) {
     startEditing,
     openDocument,
     backToList,
+    cancelForm,
+    clearFile,
     takePhoto,
     chooseFile,
     save,
