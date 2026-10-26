@@ -1,7 +1,6 @@
 import type { IsoDate, IsoTimestamp } from './common';
-import { isValidIsoDate } from './dates';
+import { isValidDailyTime, isValidIsoDate } from './dates';
 
-const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
@@ -9,7 +8,7 @@ const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 export function validateDateTime(date: string, time: string): { date: string | null; time: string | null } {
   return {
     date: !date.trim() ? 'Enter the date.' : isValidIsoDate(date.trim()) ? null : 'Use the format YYYY-MM-DD, e.g. 2026-11-03.',
-    time: TIME_PATTERN.test(time.trim()) ? null : 'Enter the time, like 18:30.',
+    time: isValidDailyTime(time.trim()) ? null : 'Enter the time, like 18:30.',
   };
 }
 
