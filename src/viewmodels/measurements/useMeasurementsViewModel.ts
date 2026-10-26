@@ -4,6 +4,7 @@ import { splitTimestamp, toTimestamp, validateDateTime } from '../../models/date
 import { toAppError } from '../../models/errors';
 import type { FamilyProfile } from '../../models/FamilyProfile';
 import { UNITS_BY_TYPE, type Measurement, type MeasurementType, type MeasurementUnit } from '../../models/Measurement';
+import { parsePositiveNumber } from '../../models/numbers';
 import { measurementRepository } from '../../repositories/measurementRepository';
 import { profileRepository } from '../../repositories/profileRepository';
 import { useReloadOnFocus } from '../shared/useReloadOnFocus';
@@ -12,12 +13,6 @@ import { useReloadOnFocus } from '../shared/useReloadOnFocus';
 type Editing = null | 'new' | Measurement;
 type FormErrors = { value: string; diastolic: string; date: string; time: string };
 const NO_ERRORS: FormErrors = { value: '', diastolic: '', date: '', time: '' };
-
-// "72,5" or "72.5" -> 72.5. Returns null unless it is a number above zero.
-function parsePositive(text: string): number | null {
-  const number = Number(text.trim().replace(',', '.'));
-  return text.trim() && Number.isFinite(number) && number > 0 ? number : null;
-}
 
 // ViewModel for the Health Measurements page (FR08): list with a type filter, add, edit and delete.
 // It only stores and shows the numbers: no diagnosis, no warnings, no daily-entry rule.
@@ -111,8 +106,8 @@ export function useMeasurementsViewModel(profileId: string) {
   async function save() {
     if (saving || !editing) return;
     const isPressure = type === 'blood pressure';
-    const first = parsePositive(value);
-    const second = parsePositive(diastolic);
+    const first = parsePositiveNumber(value);
+    const second = parsePositiveNumber(diastolic);
     const dateTime = validateDateTime(date, time);
     const next: FormErrors = {
       value: first === null ? (isPressure ? 'Enter the top number, like 130.' : 'Enter a number above zero.') : '',
