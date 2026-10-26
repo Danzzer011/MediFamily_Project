@@ -1,22 +1,29 @@
 import { router, Stack } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import Button from '../../components/Button';
 import DemoDataNotice from '../../components/DemoDataNotice';
 import ErrorBanner from '../../components/ErrorBanner';
 import ErrorView from '../../components/ErrorView';
+import Dock from '../../components/ledger/Dock';
+import Icon from '../../components/ledger/Icon';
+import LedgerList from '../../components/ledger/LedgerList';
+import LedgerScreen from '../../components/ledger/LedgerScreen';
+import PageTitle from '../../components/ledger/PageTitle';
+import SectionLabel from '../../components/ledger/SectionLabel';
 import LoadingView from '../../components/LoadingView';
-import Screen from '../../components/Screen';
 import { formatIsoDate } from '../../models/dates';
 import { needsRefill, treatmentStatus, type Medication, type TreatmentStatus } from '../../models/Medication';
 import { useThemeColors } from '../../theme';
+import { monoFont } from '../../theme/medifamily-theme';
 import { useMedicationsViewModel } from '../../viewmodels/medications/useMedicationsViewModel';
 
-const STATUS_LABELS: Record<TreatmentStatus, string> = {
-  not_started: 'Not started yet',
-  active: 'Active',
-  ended: 'Treatment ended',
-};
+// The list is split by treatment period, current medications first.
+const GROUPS: { status: TreatmentStatus; label: string }[] = [
+  { status: 'active', label: 'Taking now' },
+  { status: 'not_started', label: 'Not started yet' },
+  { status: 'ended', label: 'Treatment ended' },
+];
 
 // Medications page (FR03): the profile's medication schedules, with a link to add one.
 // Tapping a medication opens it for editing or removing.
@@ -30,61 +37,86 @@ export default function MedicationListScreen({ profileId }: { profileId: string 
   }
 
   return (
-    <Screen>
+    <LedgerScreen>
       <Stack.Screen options={{ title: `${vm.profileName} · Medications` }} />
-      <Button title="Add medication" onPress={() => router.push(`/profiles/${profileId}/medications/new`)} />
+      <PageTitle text="Medications" />
 
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.emptyTitle, { color: colors.text }]}>
-          Reminders on this phone: {vm.remindersEnabled ? 'On' : 'Off'}
-        </Text>
-        {vm.remindersSupported ? (
-          <>
-            <Text style={[styles.muted, { color: colors.textMuted }]}>
-              Only you get these reminders, on this phone. They name {vm.profileName} and the medication, and only
-              happen during the treatment period. A reminder does not record that the dose was taken.
+      {/* this phone's reminder setting for the profile */}
+      {vm.remindersSupported ? (
+        <Pressable
+          accessibilityRole="switch"
+          accessibilityState={{ checked: vm.remindersEnabled, busy: vm.changingReminders }}
+          accessibilityLabel={`Medication reminders for ${vm.profileName} on this phone`}
+          disabled={vm.changingReminders}
+          onPress={vm.toggleReminders}
+          style={[styles.reminders, { borderColor: colors.border }]}>
+          <Icon name="bell" size={20} color={colors.text} />
+          <View style={styles.remindersText}>
+            <Text style={[styles.remindersTitle, { color: colors.text }]}>Reminders on this phone</Text>
+            <Text style={[styles.hint, { color: colors.textMuted }]}>
+              Only you get these reminders, on this phone. They name {vm.profileName} and the medication, and only happen
+              during the treatment period. A reminder does not record that the dose was taken.
             </Text>
-            {vm.reminderError ? <ErrorBanner message={vm.reminderError} /> : null}
-            <Button
-              title={vm.remindersEnabled ? 'Turn reminders off' : 'Turn reminders on'}
-              variant="secondary"
-              loading={vm.changingReminders}
-              onPress={vm.toggleReminders}
-            />
-          </>
-        ) : (
-          <Text style={[styles.muted, { color: colors.textMuted }]}>
+          </View>
+          <View pointerEvents="none">
+            <Switch value={vm.remindersEnabled} trackColor={{ false: colors.border, true: colors.primary }} thumbColor={colors.surface} />
+          </View>
+        </Pressable>
+      ) : (
+        <View style={[styles.reminders, { borderColor: colors.border }]}>
+          <Icon name="bell" size={20} color={colors.textMuted} />
+          <Text style={[styles.hint, styles.remindersText, { color: colors.textMuted }]}>
             Reminders need the MediFamily app on a phone. They are not available in the browser.
           </Text>
-        )}
-      </View>
+        </View>
+      )}
+      {vm.reminderError ? (
+        <View style={styles.padded}>
+          <ErrorBanner message={vm.reminderError} />
+        </View>
+      ) : null}
 
       {vm.medications.length === 0 ? (
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>No medications yet</Text>
-          <Text style={[styles.muted, { color: colors.textMuted }]}>
+        <View style={styles.empty}>
+          <Text accessibilityRole="header" style={[styles.emptyTitle, { color: colors.text }]}>No medications yet</Text>
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>
             Add a medication with its dosage, daily reminder times and treatment dates.
           </Text>
         </View>
       ) : (
-        vm.medications.map((medication) => (
-          <MedicationCard
-            key={medication.id}
-            medication={medication}
-            onPress={() => router.push(`/profiles/${profileId}/medications/${medication.id}`)}
-          />
-        ))
+        GROUPS.map((group) => {
+          const items = vm.medications.filter((m) => treatmentStatus(m) === group.status);
+          if (items.length === 0) return null;
+          return (
+            <View key={group.status}>
+              <SectionLabel label={group.label} count={items.length} />
+              <LedgerList>
+                {items.map((medication) => (
+                  <MedicationRow
+                    key={medication.id}
+                    medication={medication}
+                    onPress={() => router.push(`/profiles/${profileId}/medications/${medication.id}`)}
+                  />
+                ))}
+              </LedgerList>
+            </View>
+          );
+        })
       )}
 
-      <DemoDataNotice />
-    </Screen>
+      <Dock>
+        <Button title="Add medication" onPress={() => router.push(`/profiles/${profileId}/medications/new`)} />
+      </Dock>
+      <View style={styles.demoNotice}>
+        <DemoDataNotice />
+      </View>
+    </LedgerScreen>
   );
 }
 
 // One medication: name, dosage, reminder times and treatment period.
-function MedicationCard({ medication, onPress }: { medication: Medication; onPress: () => void }) {
+function MedicationRow({ medication, onPress }: { medication: Medication; onPress: () => void }) {
   const colors = useThemeColors();
-  const status = treatmentStatus(medication);
   const period = medication.treatmentEnd
     ? `${formatIsoDate(medication.treatmentStart)} – ${formatIsoDate(medication.treatmentEnd)}`
     : `From ${formatIsoDate(medication.treatmentStart)} · no end date`;
@@ -94,45 +126,45 @@ function MedicationCard({ medication, onPress }: { medication: Medication; onPre
       accessibilityRole="button"
       accessibilityLabel={`Edit ${medication.name}`}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.card,
-        { backgroundColor: colors.surface, borderColor: colors.border },
-        status === 'ended' && styles.ended,
-        pressed && styles.pressed,
-      ]}>
-      <View style={styles.header}>
+      style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.notice }]}>
+      <View style={styles.rowBody}>
         <Text style={[styles.name, { color: colors.text }]}>{medication.name}</Text>
-        <Text style={[styles.badge, { color: colors.primary, borderColor: colors.primary }]}>{STATUS_LABELS[status]}</Text>
-      </View>
-      <Text style={[styles.dosage, { color: colors.text }]}>{medication.dosageInstructions}</Text>
-      <View style={styles.times}>
-        {medication.reminderTimes.map((time) => (
-          <Text key={time} style={[styles.time, { backgroundColor: colors.notice, color: colors.primary }]}>
-            {time}
+        <Text style={[styles.dosage, { color: colors.text }]}>{medication.dosageInstructions}</Text>
+        <View style={styles.times}>
+          {medication.reminderTimes.map((time) => (
+            <Text key={time} style={[styles.time, { backgroundColor: colors.notice, color: colors.primary, fontFamily: monoFont }]}>
+              {time}
+            </Text>
+          ))}
+        </View>
+        <Text style={[styles.period, { color: colors.textMuted }]}>{period}</Text>
+        {needsRefill(medication) ? (
+          <Text style={[styles.refill, { color: colors.danger }]}>
+            Refill needed: {medication.remainingQuantity} {medication.stockUnit} left
           </Text>
-        ))}
+        ) : null}
       </View>
-      <Text style={[styles.muted, { color: colors.textMuted }]}>{period}</Text>
-      {needsRefill(medication) ? (
-        <Text style={[styles.refill, { color: colors.danger }]}>
-          Refill needed: {medication.remainingQuantity} {medication.stockUnit} left
-        </Text>
-      ) : null}
+      <Icon name="next" size={18} color={colors.textMuted} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderRadius: 20, padding: 20, gap: 10 },
-  pressed: { opacity: 0.8 },
-  ended: { opacity: 0.6 },
-  header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
-  name: { flex: 1, fontSize: 18, fontWeight: '700' },
-  badge: { fontSize: 12, fontWeight: '700', borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
-  dosage: { fontSize: 16, lineHeight: 22 },
-  times: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  time: { fontSize: 15, fontWeight: '700', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, overflow: 'hidden' },
-  emptyTitle: { fontSize: 17, fontWeight: '700' },
-  muted: { fontSize: 14 },
+  reminders: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1 },
+  remindersText: { flex: 1 },
+  remindersTitle: { fontSize: 15, fontWeight: '600' },
+  hint: { fontSize: 13, lineHeight: 18 },
+  padded: { paddingHorizontal: 16, paddingTop: 12 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16 },
+  rowBody: { flex: 1, gap: 4 },
+  name: { fontSize: 17, fontWeight: '700' },
+  dosage: { fontSize: 15, lineHeight: 21 },
+  times: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 2 },
+  time: { fontSize: 14, fontWeight: '700', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2, overflow: 'hidden' },
+  period: { fontSize: 13 },
   refill: { fontSize: 14, fontWeight: '700' },
+  empty: { paddingHorizontal: 16, paddingTop: 24, gap: 8 },
+  emptyTitle: { fontSize: 24, lineHeight: 30, fontWeight: '700' },
+  emptyText: { fontSize: 16, lineHeight: 22 },
+  demoNotice: { paddingHorizontal: 16, paddingTop: 20 },
 });

@@ -7,6 +7,7 @@ import DemoDataNotice from '../../components/DemoDataNotice';
 import ErrorBanner from '../../components/ErrorBanner';
 import ErrorView from '../../components/ErrorView';
 import DateColumn from '../../components/ledger/DateColumn';
+import DateField from '../../components/ledger/DateField';
 import HeaderCancel from '../../components/ledger/HeaderCancel';
 import Icon from '../../components/ledger/Icon';
 import LedgerField from '../../components/ledger/LedgerField';
@@ -72,16 +73,7 @@ export default function AppointmentsScreen({ profileId }: { profileId: string })
           <LedgerField label="Doctor name" tag="Required" value={vm.doctor} onChangeText={vm.setDoctor} error={vm.errors.doctor} autoCapitalize="words" />
           <View style={styles.pair}>
             <View style={styles.wide}>
-              <LedgerField
-                label="Date"
-                tag="Required"
-                mono
-                value={vm.date}
-                onChangeText={vm.setDate}
-                error={vm.errors.date}
-                placeholder="YYYY-MM-DD"
-                keyboardType="numbers-and-punctuation"
-              />
+              <DateField label="Date" tag="Required" value={vm.date} onChangeText={vm.setDate} error={vm.errors.date} />
             </View>
             <View style={styles.narrow}>
               <LedgerField

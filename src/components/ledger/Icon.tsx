@@ -47,6 +47,49 @@ const SHAPES = {
   ),
   next: <Path d="M9 18l6-6-6-6" />,
   back: <Path d="M15 18l-6-6 6-6" />,
+  // the profile menu and the password field
+  heart: <Path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 000-7.8z" />,
+  activity: <Path d="M22 12h-4l-3 9L9 3l-3 9H2" />,
+  pill: (
+    <>
+      <Rect x="2" y="8" width="20" height="8" rx="4" transform="rotate(-45 12 12)" />
+      <Path d="M8.5 8.5l7 7" />
+    </>
+  ),
+  box: (
+    <>
+      <Path d="M21 8l-9-5-9 5v8l9 5 9-5z" />
+      <Path d="M3 8l9 5 9-5M12 13v8" />
+    </>
+  ),
+  clipboard: (
+    <>
+      <Rect x="5" y="4" width="14" height="18" rx="2" />
+      <Path d="M9 2h6v4H9zM9 12h6M9 16h4" />
+    </>
+  ),
+  calendar: (
+    <>
+      <Rect x="3" y="4" width="18" height="18" rx="2" />
+      <Path d="M16 2v4M8 2v4M3 10h18" />
+    </>
+  ),
+  folder: <Path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />,
+  users: (
+    <>
+      <Circle cx="9" cy="7" r="4" />
+      <Path d="M1 21v-2a4 4 0 014-4h8a4 4 0 014 4v2M16 3.1a4 4 0 010 7.8M23 21v-2a4 4 0 00-3-3.9" />
+    </>
+  ),
+  eye: (
+    <>
+      <Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <Circle cx="12" cy="12" r="3" />
+    </>
+  ),
+  'eye-off': (
+    <Path d="M17.9 17.9A10 10 0 0112 20c-7 0-11-8-11-8a18 18 0 015.1-5.9M9.9 4.2A9 9 0 0112 4c7 0 11 8 11 8a18 18 0 01-2.2 3.2M14.1 14.1a3 3 0 01-4.2-4.2M1 1l22 22" />
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof SHAPES;

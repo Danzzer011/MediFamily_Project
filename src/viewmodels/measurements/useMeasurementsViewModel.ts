@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { splitTimestamp, toTimestamp, validateDateTime } from '../../models/dateTime';
 import { toAppError } from '../../models/errors';
 import type { FamilyProfile } from '../../models/FamilyProfile';
-import { UNITS_BY_TYPE, type Measurement, type MeasurementType, type MeasurementUnit } from '../../models/Measurement';
+import { MEASUREMENT_TYPES, UNITS_BY_TYPE, type Measurement, type MeasurementType, type MeasurementUnit } from '../../models/Measurement';
 import { parsePositiveNumber } from '../../models/numbers';
 import { measurementRepository } from '../../repositories/measurementRepository';
 import { profileRepository } from '../../repositories/profileRepository';
@@ -13,6 +13,7 @@ import { useReloadOnFocus } from '../shared/useReloadOnFocus';
 type Editing = null | 'new' | Measurement;
 type FormErrors = { value: string; diastolic: string; date: string; time: string };
 const NO_ERRORS: FormErrors = { value: '', diastolic: '', date: '', time: '' };
+const CHART_SIZE = 7; // how many recent readings the chart shows
 
 // ViewModel for the Health Measurements page (FR08): list with a type filter, add, edit and delete.
 // It only stores and shows the numbers: no diagnosis, no warnings, no daily-entry rule.
@@ -64,6 +65,16 @@ export function useMeasurementsViewModel(profileId: string) {
   }, [profileId, reloadKey]);
 
   const visible = filter === 'all' ? measurements : measurements.filter((m) => m.type === filter);
+
+  // The chart shows the last few readings of the chosen type, oldest first. Glucose and weight
+  // can be saved in two units, so it only uses the readings in the same unit as the newest one.
+  const chartReadings =
+    filter === 'all' || visible.length === 0
+      ? []
+      : visible.filter((m) => m.unit === visible[0].unit).slice(0, CHART_SIZE).reverse();
+
+  // the newest reading of each type, for the summary strip at the top (the list is newest first)
+  const latestByType = MEASUREMENT_TYPES.map((t) => ({ type: t, reading: measurements.find((m) => m.type === t) ?? null }));
 
   // picking a type also picks that type's default unit
   function changeType(next: MeasurementType) {
@@ -166,6 +177,8 @@ export function useMeasurementsViewModel(profileId: string) {
   return {
     profile,
     visible,
+    chartReadings,
+    latestByType,
     total: measurements.length,
     loading,
     loadError,

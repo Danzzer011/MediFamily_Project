@@ -17,6 +17,10 @@ const measurements: Measurement[] = [
   demo(3, '2026-10-24T04:30:00.000Z', 'blood pressure', 128, 82, 'mmHg'),
   demo(4, '2026-10-23T04:05:00.000Z', 'weight', 82.4, null, 'kg'),
   demo(5, '2026-10-22T03:50:00.000Z', 'blood glucose', 6.1, null, 'mmol/L'),
+  // a few earlier readings, so the demo chart has a line to draw
+  demo(6, '2026-10-23T04:40:00.000Z', 'blood pressure', 131, 84, 'mmHg'),
+  demo(7, '2026-10-22T04:35:00.000Z', 'blood pressure', 126, 80, 'mmHg'),
+  demo(8, '2026-10-21T04:30:00.000Z', 'blood pressure', 134, 88, 'mmHg'),
 ];
 
 // Checks the caller may use the profile, like row-level security would.

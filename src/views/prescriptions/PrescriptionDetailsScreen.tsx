@@ -6,8 +6,12 @@ import Button from '../../components/Button';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import DemoDataNotice from '../../components/DemoDataNotice';
 import ErrorView from '../../components/ErrorView';
+import Dock from '../../components/ledger/Dock';
+import LedgerList from '../../components/ledger/LedgerList';
+import LedgerScreen from '../../components/ledger/LedgerScreen';
+import SectionLabel from '../../components/ledger/SectionLabel';
+import LinkAction from '../../components/LinkAction';
 import LoadingView from '../../components/LoadingView';
-import Screen from '../../components/Screen';
 import { formatIsoDate } from '../../models/dates';
 import { useThemeColors } from '../../theme';
 import { usePrescriptionDetailsViewModel } from '../../viewmodels/prescriptions/usePrescriptionDetailsViewModel';
@@ -35,37 +39,41 @@ export default function PrescriptionDetailsScreen({
   const prescription = vm.prescription;
 
   return (
-    <Screen>
+    <LedgerScreen>
       <Stack.Screen options={{ title: prescription.doctorName }} />
 
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      {/* who wrote it and when */}
+      <View style={styles.header}>
         <Text accessibilityRole="header" style={[styles.doctor, { color: colors.text }]}>
           {prescription.doctorName}
         </Text>
-        <Text style={[styles.muted, { color: colors.textMuted }]}>{prescription.speciality}</Text>
-        <Text style={[styles.muted, { color: colors.textMuted }]}>Visit on {formatIsoDate(prescription.visitDate)}</Text>
+        <Text style={[styles.meta, { color: colors.textMuted }]}>
+          {prescription.speciality} · Visit on {formatIsoDate(prescription.visitDate)}
+        </Text>
       </View>
 
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Prescribed medicines</Text>
+      <SectionLabel label="Prescribed medicines" count={prescription.medicines.length} />
+      <LedgerList>
         {prescription.medicines.map((medicine) => {
           const linked = vm.linkedMedication(medicine.medicationId);
           return (
-            <View key={medicine.id} style={[styles.medicine, { borderColor: colors.border }]}>
+            <View key={medicine.id} style={styles.medicine}>
               <Text style={[styles.medicineName, { color: colors.text }]}>{medicine.medicineName}</Text>
               {medicine.dosageInstructions ? (
                 <Text style={[styles.body, { color: colors.text }]}>{medicine.dosageInstructions}</Text>
               ) : null}
               {linked ? (
-                <Button
-                  title={`Schedule: ${linked.name}`}
-                  variant="secondary"
+                <LinkAction
+                  label={`Schedule: ${linked.name}`}
+                  icon="next"
+                  accessibilityLabel={`Open the schedule ${linked.name}`}
                   onPress={() => router.push(`/profiles/${profileId}/medications/${linked.id}`)}
                 />
               ) : (
-                <Button
-                  title="Create medication schedule"
-                  variant="secondary"
+                <LinkAction
+                  label="Create medication schedule"
+                  icon="calendar-plus"
+                  accessibilityLabel={`Create a medication schedule for ${medicine.medicineName}`}
                   onPress={() =>
                     router.push({
                       pathname: '/profiles/[profileId]/medications/new',
@@ -84,13 +92,13 @@ export default function PrescriptionDetailsScreen({
             </View>
           );
         })}
-        <Text style={[styles.note, { color: colors.textMuted }]}>
-          Changing or removing a schedule never changes what is written on the prescription.
-        </Text>
-      </View>
+      </LedgerList>
+      <Text style={[styles.note, { color: colors.textMuted }]}>
+        Changing or removing a schedule never changes what is written on the prescription.
+      </Text>
 
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Attachment</Text>
+      <SectionLabel label="Attachment" />
+      <View style={styles.padded}>
         {prescription.attachment ? (
           <AttachmentPreview
             file={{
@@ -104,12 +112,15 @@ export default function PrescriptionDetailsScreen({
         )}
       </View>
 
-      <Button
-        title="Edit prescription"
-        onPress={() => router.push(`/profiles/${profileId}/prescriptions/${prescription.id}/edit`)}
-      />
-      <Button title="Delete prescription" variant="danger" onPress={vm.askToDelete} />
-      <DemoDataNotice />
+      <Dock>
+        <Button title="Edit prescription" onPress={() => router.push(`/profiles/${profileId}/prescriptions/${prescription.id}/edit`)} />
+      </Dock>
+      <View style={[styles.danger, { borderColor: colors.border }]}>
+        <Button title="Delete prescription" variant="danger" onPress={vm.askToDelete} />
+      </View>
+      <View style={styles.demoNotice}>
+        <DemoDataNotice />
+      </View>
 
       <ConfirmDialog
         visible={vm.confirmingDelete}
@@ -125,17 +136,20 @@ export default function PrescriptionDetailsScreen({
         onConfirm={confirmDelete}
         onCancel={vm.cancelDelete}
       />
-    </Screen>
+    </LedgerScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderRadius: 20, padding: 20, gap: 10 },
-  doctor: { fontSize: 22, fontWeight: '700' },
-  sectionTitle: { fontSize: 17, fontWeight: '700' },
-  muted: { fontSize: 15 },
-  body: { fontSize: 15, lineHeight: 21 },
-  medicine: { borderWidth: 1, borderRadius: 14, padding: 14, gap: 8 },
+  header: { paddingHorizontal: 16, paddingTop: 16, gap: 4 },
+  doctor: { fontSize: 24, lineHeight: 30, fontWeight: '700' },
+  meta: { fontSize: 15 },
+  medicine: { paddingTop: 12, paddingBottom: 4, paddingHorizontal: 16, gap: 2 },
   medicineName: { fontSize: 16, fontWeight: '700' },
-  note: { fontSize: 13 },
+  body: { fontSize: 15, lineHeight: 21 },
+  note: { fontSize: 13, paddingHorizontal: 16, paddingTop: 8 },
+  padded: { paddingHorizontal: 16 },
+  muted: { fontSize: 15 },
+  danger: { marginTop: 28, paddingHorizontal: 16, paddingTop: 16, borderTopWidth: 1 },
+  demoNotice: { paddingHorizontal: 16, paddingTop: 20 },
 });

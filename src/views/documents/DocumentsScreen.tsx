@@ -10,6 +10,7 @@ import DemoDataNotice from '../../components/DemoDataNotice';
 import ErrorBanner from '../../components/ErrorBanner';
 import ErrorView from '../../components/ErrorView';
 import DateColumn from '../../components/ledger/DateColumn';
+import DateField from '../../components/ledger/DateField';
 import HeaderBack from '../../components/ledger/HeaderBack';
 import HeaderCancel from '../../components/ledger/HeaderCancel';
 import Icon, { type IconName } from '../../components/ledger/Icon';
@@ -123,16 +124,13 @@ export default function DocumentsScreen({ profileId }: { profileId: string }) {
             {vm.errors.category ? <Text style={[styles.error, { color: colors.danger }]}>{vm.errors.category}</Text> : null}
           </View>
 
-          <LedgerField
+          <DateField
             label="Relevant date"
             tag="Required"
-            mono
             value={vm.date}
             onChangeText={vm.setDate}
             error={vm.errors.date}
-            placeholder="YYYY-MM-DD"
             hint="The date the document is about, like the test or visit date."
-            keyboardType="numbers-and-punctuation"
           />
         </View>
 

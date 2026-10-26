@@ -1,14 +1,19 @@
 import { router, Stack } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import Button from '../../components/Button';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import DemoDataNotice from '../../components/DemoDataNotice';
 import ErrorBanner from '../../components/ErrorBanner';
 import ErrorView from '../../components/ErrorView';
+import DateField from '../../components/ledger/DateField';
+import Dock from '../../components/ledger/Dock';
+import LedgerField from '../../components/ledger/LedgerField';
+import LedgerScreen from '../../components/ledger/LedgerScreen';
+import PageTitle from '../../components/ledger/PageTitle';
+import SectionLabel from '../../components/ledger/SectionLabel';
+import LinkAction from '../../components/LinkAction';
 import LoadingView from '../../components/LoadingView';
-import Screen from '../../components/Screen';
-import TextField from '../../components/TextField';
 import { useThemeColors } from '../../theme';
 import {
   useMedicationFormViewModel,
@@ -28,6 +33,7 @@ export default function MedicationFormScreen({
 }) {
   const colors = useThemeColors();
   const vm = useMedicationFormViewModel(profileId, medicationId, fromPrescription);
+  const title = vm.isEditing ? 'Edit medication' : 'Add medication';
 
   async function save() {
     const saved = await vm.save();
@@ -45,24 +51,32 @@ export default function MedicationFormScreen({
   }
 
   return (
-    <Screen>
-      <Stack.Screen options={{ title: vm.isEditing ? 'Edit medication' : 'Add medication' }} />
-      {vm.formError ? <ErrorBanner message={vm.formError} /> : null}
-      {vm.staleRecord ? (
-        <Button title="Discard my edits and load latest" variant="secondary" onPress={vm.reloadLatest} />
+    <LedgerScreen>
+      <Stack.Screen options={{ title }} />
+      <PageTitle text={title} />
+      {vm.formError || vm.staleRecord ? (
+        <View style={styles.padded}>
+          {vm.formError ? <ErrorBanner message={vm.formError} /> : null}
+          {vm.staleRecord ? (
+            <Button title="Discard my edits and load latest" variant="secondary" onPress={vm.reloadLatest} />
+          ) : null}
+        </View>
       ) : null}
 
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <TextField
+      <SectionLabel label="Medicine" />
+      <View style={styles.form}>
+        <LedgerField
           label="Medication name"
+          tag="Required"
           value={vm.name}
           onChangeText={vm.changeName}
           error={vm.nameError}
           placeholder="e.g. Metformin 500 mg"
           autoCapitalize="words"
         />
-        <TextField
+        <LedgerField
           label="Dosage instructions"
+          tag="Required"
           value={vm.dosage}
           onChangeText={vm.changeDosage}
           error={vm.dosageError}
@@ -71,17 +85,18 @@ export default function MedicationFormScreen({
         />
       </View>
 
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Daily reminder times</Text>
-        <Text style={[styles.muted, { color: colors.textMuted }]}>
+      <SectionLabel label="Daily reminder times" count={vm.times.length} />
+      <View style={styles.form}>
+        <Text style={[styles.hint, { color: colors.textMuted }]}>
           24-hour format, e.g. 08:00 or 20:30. Add one time for each dose of the day.
         </Text>
         {vm.timesError ? <Text style={[styles.error, { color: colors.danger }]}>{vm.timesError}</Text> : null}
         {vm.times.map((time, index) => (
           <View key={time.key} style={styles.timeRow}>
             <View style={styles.timeField}>
-              <TextField
+              <LedgerField
                 label={`Time ${index + 1}`}
+                mono
                 value={time.value}
                 onChangeText={(text) => vm.changeTime(time.key, text)}
                 error={vm.timeErrors[time.key]}
@@ -90,47 +105,39 @@ export default function MedicationFormScreen({
                 maxLength={5}
               />
             </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Remove time ${index + 1}`}
-              onPress={() => vm.removeTime(time.key)}
-              style={styles.removeButton}>
-              <Text style={[styles.remove, { color: colors.danger }]}>Remove</Text>
-            </Pressable>
+            <View style={styles.removeTime}>
+              <LinkAction label="Remove" danger accessibilityLabel={`Remove time ${index + 1}`} onPress={() => vm.removeTime(time.key)} />
+            </View>
           </View>
         ))}
         <Button title="Add reminder time" variant="secondary" onPress={vm.addTime} />
       </View>
 
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Treatment period</Text>
-        <TextField
-          label="Start date"
-          value={vm.startDate}
-          onChangeText={vm.changeStartDate}
-          error={vm.startError}
-          placeholder="YYYY-MM-DD"
-          keyboardType="numbers-and-punctuation"
-          maxLength={10}
-        />
-        <TextField
-          label="End date (optional)"
+      <SectionLabel label="Treatment period" />
+      <View style={styles.form}>
+        <DateField label="Start date" tag="Required" value={vm.startDate} onChangeText={vm.changeStartDate} error={vm.startError} />
+        <DateField
+          label="End date"
+          tag="Optional"
           value={vm.endDate}
           onChangeText={vm.changeEndDate}
           error={vm.endError}
           hint="Leave blank if there is no end date — reminders continue until the medication is removed."
-          placeholder="YYYY-MM-DD"
-          keyboardType="numbers-and-punctuation"
-          maxLength={10}
         />
       </View>
 
-      <Button title={vm.isEditing ? 'Save changes' : 'Add medication'} loading={vm.saving} onPress={save} />
-      <Button title="Cancel" variant="secondary" disabled={vm.saving} onPress={() => router.back()} />
+      <Dock>
+        <Button title={vm.isEditing ? 'Save changes' : 'Add medication'} loading={vm.saving} onPress={save} />
+        <Button title="Cancel" variant="secondary" disabled={vm.saving} onPress={() => router.back()} />
+      </Dock>
       {vm.isEditing ? (
-        <Button title="Remove medication" variant="danger" disabled={vm.saving} onPress={vm.askToDelete} />
+        <View style={[styles.danger, { borderColor: colors.border }]}>
+          <Button title="Remove medication" variant="danger" disabled={vm.saving} onPress={vm.askToDelete} />
+        </View>
       ) : null}
-      <DemoDataNotice />
+      <View style={styles.demoNotice}>
+        <DemoDataNotice />
+      </View>
 
       <ConfirmDialog
         visible={vm.confirmingDelete}
@@ -146,17 +153,18 @@ export default function MedicationFormScreen({
         onConfirm={confirmDelete}
         onCancel={vm.cancelDelete}
       />
-    </Screen>
+    </LedgerScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderRadius: 20, padding: 20, gap: 14 },
-  sectionTitle: { fontSize: 17, fontWeight: '700' },
-  muted: { fontSize: 14 },
-  error: { fontSize: 13 },
+  padded: { paddingHorizontal: 16, gap: 12 },
+  form: { paddingHorizontal: 16, gap: 14 },
+  hint: { fontSize: 13, lineHeight: 18 },
+  error: { fontSize: 13, fontWeight: '600' },
   timeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   timeField: { flex: 1 },
-  removeButton: { marginTop: 36, paddingVertical: 6, paddingHorizontal: 4 },
-  remove: { fontSize: 15, fontWeight: '700' },
+  removeTime: { marginTop: 26 },
+  danger: { marginTop: 28, paddingHorizontal: 16, paddingTop: 16, borderTopWidth: 1 },
+  demoNotice: { paddingHorizontal: 16, paddingTop: 20 },
 });

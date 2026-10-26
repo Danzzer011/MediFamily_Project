@@ -7,9 +7,12 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import DemoDataNotice from '../../components/DemoDataNotice';
 import ErrorBanner from '../../components/ErrorBanner';
 import ErrorView from '../../components/ErrorView';
+import Dock from '../../components/ledger/Dock';
+import LedgerField from '../../components/ledger/LedgerField';
+import LedgerScreen from '../../components/ledger/LedgerScreen';
+import PageTitle from '../../components/ledger/PageTitle';
+import SectionLabel from '../../components/ledger/SectionLabel';
 import LoadingView from '../../components/LoadingView';
-import Screen from '../../components/Screen';
-import TextField from '../../components/TextField';
 import { COMMON_STOCK_UNITS } from '../../models/Medication';
 import { useThemeColors } from '../../theme';
 import { useStockFormViewModel } from '../../viewmodels/stock/useStockFormViewModel';
@@ -35,28 +38,36 @@ export default function StockFormScreen({ medicationId }: { medicationId: string
   }
 
   return (
-    <Screen>
+    <LedgerScreen>
       <Stack.Screen options={{ title: `${vm.medication.name} · Stock` }} />
-      {vm.formError ? <ErrorBanner message={vm.formError} /> : null}
-      {vm.staleRecord ? (
-        <Button title="Discard my edits and load latest" variant="secondary" onPress={vm.reloadLatest} />
+      <PageTitle text="Update stock" />
+      <Text style={[styles.subtitle, { color: colors.textMuted }]}>{vm.medication.name}</Text>
+      {vm.formError || vm.staleRecord ? (
+        <View style={styles.padded}>
+          {vm.formError ? <ErrorBanner message={vm.formError} /> : null}
+          {vm.staleRecord ? (
+            <Button title="Discard my edits and load latest" variant="secondary" onPress={vm.reloadLatest} />
+          ) : null}
+        </View>
       ) : null}
 
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Remaining quantity</Text>
-        <TextField
-          label="Quantity left"
-          value={vm.quantity}
-          onChangeText={vm.changeQuantity}
-          error={vm.quantityError}
-          placeholder="e.g. 30"
-          keyboardType="decimal-pad"
-        />
-        <View style={styles.adjustRow}>
-          <View style={styles.adjustButton}>
+      <SectionLabel label="Remaining quantity" />
+      <View style={styles.form}>
+        <View style={styles.quantityRow}>
+          <View style={styles.step}>
             <Button title="− 1" variant="secondary" onPress={() => vm.adjustQuantity(-1)} />
           </View>
-          <View style={styles.adjustButton}>
+          <View style={styles.quantityField}>
+            <LedgerField
+              label="Quantity left"
+              value={vm.quantity}
+              onChangeText={vm.changeQuantity}
+              error={vm.quantityError}
+              placeholder="e.g. 30"
+              keyboardType="decimal-pad"
+            />
+          </View>
+          <View style={styles.step}>
             <Button title="+ 1" variant="secondary" onPress={() => vm.adjustQuantity(1)} />
           </View>
         </View>
@@ -67,18 +78,12 @@ export default function StockFormScreen({ medicationId }: { medicationId: string
             <ChoiceChip key={option} label={option} selected={vm.unit === option} onPress={() => vm.changeUnit(option)} />
           ))}
         </View>
-        <TextField
-          label="Or type another unit"
-          value={vm.unit}
-          onChangeText={vm.changeUnit}
-          error={vm.unitError}
-          placeholder="e.g. sachets"
-        />
+        <LedgerField label="Or type another unit" value={vm.unit} onChangeText={vm.changeUnit} error={vm.unitError} placeholder="e.g. sachets" />
       </View>
 
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Refill alert</Text>
-        <TextField
+      <SectionLabel label="Refill alert" />
+      <View style={styles.form}>
+        <LedgerField
           label="Alert when this much is left or less"
           value={vm.threshold}
           onChangeText={vm.changeThreshold}
@@ -88,18 +93,22 @@ export default function StockFormScreen({ medicationId }: { medicationId: string
           keyboardType="decimal-pad"
         />
         {vm.wouldNeedRefill ? (
-          <Text style={[styles.preview, { color: colors.danger }]}>
-            After saving, this medication will show a refill alert.
-          </Text>
+          <Text style={[styles.preview, { color: colors.danger }]}>After saving, this medication will show a refill alert.</Text>
         ) : null}
       </View>
 
-      <Button title="Save stock" loading={vm.saving} onPress={save} />
-      <Button title="Cancel" variant="secondary" disabled={vm.saving} onPress={() => router.back()} />
+      <Dock>
+        <Button title="Save stock" loading={vm.saving} onPress={save} />
+        <Button title="Cancel" variant="secondary" disabled={vm.saving} onPress={() => router.back()} />
+      </Dock>
       {vm.isTracked ? (
-        <Button title="Stop tracking stock" variant="danger" disabled={vm.saving} onPress={vm.askToStopTracking} />
+        <View style={[styles.danger, { borderColor: colors.border }]}>
+          <Button title="Stop tracking stock" variant="danger" disabled={vm.saving} onPress={vm.askToStopTracking} />
+        </View>
       ) : null}
-      <DemoDataNotice />
+      <View style={styles.demoNotice}>
+        <DemoDataNotice />
+      </View>
 
       <ConfirmDialog
         visible={vm.confirmingStop}
@@ -115,16 +124,20 @@ export default function StockFormScreen({ medicationId }: { medicationId: string
         onConfirm={confirmStopTracking}
         onCancel={vm.cancelStopTracking}
       />
-    </Screen>
+    </LedgerScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderRadius: 20, padding: 20, gap: 14 },
-  sectionTitle: { fontSize: 17, fontWeight: '700' },
+  subtitle: { fontSize: 16, paddingHorizontal: 16, marginTop: -6 },
+  padded: { paddingHorizontal: 16, paddingTop: 12, gap: 12 },
+  form: { paddingHorizontal: 16, gap: 14 },
+  quantityRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
+  quantityField: { flex: 1 },
+  step: { width: 72 },
   label: { fontSize: 15, fontWeight: '600' },
-  adjustRow: { flexDirection: 'row', gap: 12 },
-  adjustButton: { flex: 1 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   preview: { fontSize: 14, fontWeight: '600' },
+  danger: { marginTop: 28, paddingHorizontal: 16, paddingTop: 16, borderTopWidth: 1 },
+  demoNotice: { paddingHorizontal: 16, paddingTop: 20 },
 });

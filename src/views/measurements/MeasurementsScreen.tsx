@@ -8,11 +8,13 @@ import DemoDataNotice from '../../components/DemoDataNotice';
 import ErrorBanner from '../../components/ErrorBanner';
 import ErrorView from '../../components/ErrorView';
 import DateColumn from '../../components/ledger/DateColumn';
+import DateField from '../../components/ledger/DateField';
 import HeaderCancel from '../../components/ledger/HeaderCancel';
 import Icon from '../../components/ledger/Icon';
 import LedgerField from '../../components/ledger/LedgerField';
 import LedgerList from '../../components/ledger/LedgerList';
 import LedgerScreen from '../../components/ledger/LedgerScreen';
+import LineChart from '../../components/ledger/LineChart';
 import PageTitle from '../../components/ledger/PageTitle';
 import SectionLabel from '../../components/ledger/SectionLabel';
 import LoadingView from '../../components/LoadingView';
@@ -22,6 +24,9 @@ import { formatReading, MEASUREMENT_TYPES, UNITS_BY_TYPE, type Measurement } fro
 import { capitalize } from '../../models/text';
 import { useThemeColors } from '../../theme';
 import { useMeasurementsViewModel } from '../../viewmodels/measurements/useMeasurementsViewModel';
+
+// Short names for the summary strip, so three fit side by side on a phone.
+const STAT_LABELS = { 'blood pressure': 'Pressure', 'blood glucose': 'Glucose', weight: 'Weight' } as const;
 
 // Health Measurements page (FR08): the selected profile's readings with a type filter and an add/edit form.
 // It only shows the saved numbers: no diagnosis, no warnings.
@@ -98,16 +103,7 @@ export default function MeasurementsScreen({ profileId }: { profileId: string })
 
           <View style={styles.pair}>
             <View style={styles.wide}>
-              <LedgerField
-                label="Date"
-                tag="Required"
-                mono
-                value={vm.date}
-                onChangeText={vm.setDate}
-                error={vm.errors.date}
-                placeholder="YYYY-MM-DD"
-                keyboardType="numbers-and-punctuation"
-              />
+              <DateField label="Date" tag="Required" value={vm.date} onChangeText={vm.setDate} error={vm.errors.date} />
             </View>
             <View style={styles.narrow}>
               <LedgerField
@@ -155,11 +151,63 @@ export default function MeasurementsScreen({ profileId }: { profileId: string })
       <PageTitle text="Health measurements" />
       {vm.total > 0 ? (
         <>
+          {/* the newest reading of each type, side by side. Tapping one shows that type. */}
+          <View style={styles.strip}>
+            {vm.latestByType.map(({ type: t, reading }) => (
+              <Pressable
+                key={t}
+                accessibilityRole="button"
+                accessibilityLabel={reading ? `Latest ${t}: ${formatReading(reading)}` : `No ${t} readings yet`}
+                onPress={() => vm.setFilter(t)}
+                style={[
+                  styles.stat,
+                  { backgroundColor: colors.surface, borderColor: vm.filter === t ? colors.primary : colors.border },
+                ]}>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]} numberOfLines={1}>
+                  {STAT_LABELS[t]}
+                </Text>
+                <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>
+                  {reading ? (t === 'blood pressure' ? `${reading.value}/${reading.diastolic}` : String(reading.value)) : '—'}
+                </Text>
+                <Text style={[styles.statUnit, { color: colors.textMuted }]}>{reading ? reading.unit : 'No readings'}</Text>
+              </Pressable>
+            ))}
+          </View>
+
           <View accessibilityRole="radiogroup" style={styles.filters}>
             <ChoiceChip label="All" selected={vm.filter === 'all'} onPress={() => vm.setFilter('all')} />
             {MEASUREMENT_TYPES.map((t) => (
               <ChoiceChip key={t} label={capitalize(t)} selected={vm.filter === t} onPress={() => vm.setFilter(t)} />
             ))}
+          </View>
+
+          {/* recent readings of the chosen type as a line chart: only the numbers, no judgement (FR08) */}
+          <View style={[styles.chartCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            {vm.chartReadings.length > 0 ? (
+              <>
+                <Text style={[styles.chartTitle, { color: colors.text }]}>
+                  {`${capitalize(vm.chartReadings[0].type)} · last ${vm.chartReadings.length} · ${vm.chartReadings[0].unit}`}
+                </Text>
+                <LineChart
+                  labels={vm.chartReadings.map((m) => {
+                    const p = dayParts(m.measuredAt, vm.zone);
+                    return `${Number(p.day)} ${capitalize(p.month.toLowerCase())}`;
+                  })}
+                  series={
+                    vm.chartReadings[0].type === 'blood pressure'
+                      ? [
+                          { name: 'Top number', values: vm.chartReadings.map((m) => m.value) },
+                          { name: 'Bottom number', values: vm.chartReadings.map((m) => m.diastolic ?? 0) },
+                        ]
+                      : [{ name: capitalize(vm.chartReadings[0].type), values: vm.chartReadings.map((m) => m.value) }]
+                  }
+                />
+              </>
+            ) : (
+              <Text style={[styles.chartHint, { color: colors.textMuted }]}>
+                {vm.filter === 'all' ? 'Choose a type above to see a chart of its recent readings.' : `No ${vm.filter} readings to chart yet.`}
+              </Text>
+            )}
           </View>
           <SectionLabel label="Newest first" count={vm.visible.length} />
           {vm.visible.length > 0 ? (
@@ -210,7 +258,15 @@ function ReadingRow({ measurement: m, zone, onOpen }: { measurement: Measurement
 }
 
 const styles = StyleSheet.create({
+  strip: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
+  stat: { flex: 1, borderWidth: 1.5, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 10, gap: 2 },
+  statLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
+  statValue: { fontSize: 20, lineHeight: 26, fontWeight: '700' },
+  statUnit: { fontSize: 12 },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingBottom: 4 },
+  chartCard: { marginHorizontal: 16, marginTop: 8, borderWidth: 1, borderRadius: 16, padding: 14, gap: 6 },
+  chartTitle: { fontSize: 14, fontWeight: '700' },
+  chartHint: { fontSize: 14, lineHeight: 20, paddingVertical: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 },
   rowBody: { flex: 1, minWidth: 0 },
   type: { fontSize: 13, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase' },
