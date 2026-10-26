@@ -68,7 +68,21 @@ export default function ProfileDetailsScreen({ profileId }: { profileId: string 
           description="Doctor, visit date, prescribed medicines and attachments"
           href={`/profiles/${profile.id}/prescriptions`}
         />
-        {/* Appointments, documents and measurements (Mohab's screens) link from here. */}
+        <MenuItem
+          title="Appointments"
+          description="Doctor visits and reminders"
+          href={`/profiles/${profile.id}/appointments`}
+        />
+        <MenuItem
+          title="Medical documents"
+          description="Prescriptions, lab reports and scans"
+          href={`/profiles/${profile.id}/documents`}
+        />
+        <MenuItem
+          title="Health measurements"
+          description="Blood pressure, blood glucose and weight"
+          href={`/profiles/${profile.id}/measurements`}
+        />
       </View>
 
       {vm.isCreator ? (
