@@ -5,6 +5,7 @@ import { isValidIsoDate, todayIsoDate } from '../../models/dates';
 import { AppError, toAppError } from '../../models/errors';
 import type { FamilyProfile } from '../../models/FamilyProfile';
 import type { DocumentCategory, MedicalDocument, PickedFile } from '../../models/MedicalDocument';
+import { MAX_DOCUMENT_TITLE_LENGTH, tooLongMessage } from '../../models/text';
 import { documentRepository } from '../../repositories/documentRepository';
 import { profileRepository } from '../../repositories/profileRepository';
 import { chooseImage, choosePdf, takePhoto } from '../../services/filePickerService';
@@ -139,7 +140,7 @@ export function useDocumentsViewModel(profileId: string) {
   async function save() {
     if (saving) return;
     const next: FormErrors = {
-      title: title.trim() ? '' : 'Enter a title.',
+      title: title.trim() ? tooLongMessage(title, MAX_DOCUMENT_TITLE_LENGTH) : 'Enter a title.',
       category: category ? '' : 'Choose a category.',
       date: !date.trim() ? 'Enter the date.' : isValidIsoDate(date.trim()) ? '' : 'Use the format YYYY-MM-DD, e.g. 2026-11-03.',
       file: mode === 'add' && !file ? 'Take a photo or choose a file.' : '',

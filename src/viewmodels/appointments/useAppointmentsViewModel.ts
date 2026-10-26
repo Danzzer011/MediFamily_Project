@@ -4,15 +4,16 @@ import type { Appointment, AppointmentStatus } from '../../models/Appointment';
 import { daysUntil, splitTimestamp, toTimestamp, validateDateTime } from '../../models/dateTime';
 import { toAppError } from '../../models/errors';
 import type { FamilyProfile } from '../../models/FamilyProfile';
-import { toOptionalText } from '../../models/validation';
+import { MAX_LOCATION_LENGTH, MAX_NOTES_LENGTH, tooLongMessage } from '../../models/text';
+import { toOptionalText, validateDoctorName } from '../../models/validation';
 import { appointmentRepository } from '../../repositories/appointmentRepository';
 import { profileRepository } from '../../repositories/profileRepository';
 import { useReloadOnFocus } from '../shared/useReloadOnFocus';
 
 // null = showing the list, 'new' = adding, otherwise the appointment being edited.
 type Editing = null | 'new' | Appointment;
-type FormErrors = { doctor: string; date: string; time: string };
-const NO_ERRORS: FormErrors = { doctor: '', date: '', time: '' };
+type FormErrors = { doctor: string; date: string; time: string; location: string; notes: string };
+const NO_ERRORS: FormErrors = { doctor: '', date: '', time: '', location: '', notes: '' };
 
 // ViewModel for the Appointments page (FR05): list, add, edit and delete for the selected profile.
 export function useAppointmentsViewModel(profileId: string) {
@@ -109,12 +110,14 @@ export function useAppointmentsViewModel(profileId: string) {
     if (saving || !editing) return;
     const dateTime = validateDateTime(date, time);
     const problems: FormErrors = {
-      doctor: doctor.trim() ? '' : 'Enter the doctor’s name.',
+      doctor: validateDoctorName(doctor) ?? '',
       date: dateTime.date ?? '',
       time: dateTime.time ?? '',
+      location: tooLongMessage(location, MAX_LOCATION_LENGTH),
+      notes: tooLongMessage(notes, MAX_NOTES_LENGTH),
     };
     setErrors(problems);
-    if (problems.doctor || problems.date || problems.time) return;
+    if (Object.values(problems).some(Boolean)) return;
 
     const input = {
       doctorName: doctor.trim(),

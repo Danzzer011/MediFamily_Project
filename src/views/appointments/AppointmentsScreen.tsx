@@ -96,8 +96,8 @@ export default function AppointmentsScreen({ profileId }: { profileId: string })
               />
             </View>
           </View>
-          <LedgerField label="Location" tag="Optional" value={vm.location} onChangeText={vm.setLocation} />
-          <LedgerField label="Notes" tag="Optional" value={vm.notes} onChangeText={vm.setNotes} multiline />
+          <LedgerField label="Location" tag="Optional" value={vm.location} onChangeText={vm.setLocation} error={vm.errors.location} />
+          <LedgerField label="Notes" tag="Optional" value={vm.notes} onChangeText={vm.setNotes} error={vm.errors.notes} multiline />
           <View style={styles.status}>
             <Text style={[styles.label, { color: colors.text }]}>Status</Text>
             <Segmented options={STATUS_OPTIONS} selected={vm.status} onSelect={vm.setStatus} />
