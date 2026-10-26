@@ -161,7 +161,14 @@ export function useDocumentsViewModel(profileId: string) {
       }
       reload();
     } catch (error) {
-      setFormError(toAppError(error).message);
+      const problem = toAppError(error);
+      if (mode === 'add' && problem.code === 'validation') {
+        // the repository refused the file: say so at the file field and let the user pick another one
+        setErrors((current) => ({ ...current, file: problem.message }));
+        setFile(null);
+      } else {
+        setFormError(problem.message);
+      }
     }
     setSaving(false);
   }

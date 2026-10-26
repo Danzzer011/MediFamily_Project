@@ -60,7 +60,7 @@ export const demoDocumentRepository: DocumentRepository = {
     await demoRequest('write');
     checkAccess(profileId);
     if (!isPdf(file) && !file.mimeType.startsWith('image/')) {
-      throw new AppError('validation', 'Attach a photo or a PDF.');
+      throw new AppError('validation', 'This file type is not supported. Choose a photo (like JPG or PNG) or a PDF.');
     }
     const time = nowIso();
     const created: MedicalDocument = {
